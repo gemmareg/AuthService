@@ -5,13 +5,13 @@ using AuthService.Infrastructure.Persistance.Context.Configurations.Common;
 
 namespace AuthService.Infrastructure.Persistance.Context.Configurations
 {
-    public class ClaimConfiguration : AuditableEntityConfiguration<Permission>
+    public class PermissionConfiguration : AuditableEntityConfiguration<Permission>
     {
         public override void Configure(EntityTypeBuilder<Permission> builder)
         {
             base.Configure(builder);
 
-            builder.ToTable("Claims");
+            builder.ToTable("Permissions");
             builder.HasKey(e => e.Id);
             builder.Property(e => e.Name)
                    .IsRequired()
