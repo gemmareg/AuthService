@@ -8,7 +8,7 @@ namespace AuthService.Domain.UnitTest
         public void Create_Should_Create_User_When_Data_Is_Valid()
         {
             // Act
-            var result = User.Create("jose", "jose@email.com");
+            var result = User.Create("johndoe", "johndoe@email.com","1234","John","Doe");
 
             // Assert
             Assert.True(result.Success);
@@ -20,7 +20,7 @@ namespace AuthService.Domain.UnitTest
         [Fact]
         public void Create_Should_Fail_When_Username_Is_Empty()
         {
-            var result = User.Create("", "test@email.com");
+            var result = User.Create("", "test@email.com","1234", null, null);
 
             Assert.False(result.Success);
             Assert.Equal(ErrorMessages.USERNAME_NOT_NULL, result.Message);
@@ -29,7 +29,7 @@ namespace AuthService.Domain.UnitTest
         [Fact]
         public void Create_Should_Fail_When_Email_Is_Empty()
         {
-            var result = User.Create("user", "");
+            var result = User.Create("user", "", "1234", null, null);
 
             Assert.False(result.Success);
             Assert.Equal(ErrorMessages.EMAIL_NOT_NULL, result.Message);

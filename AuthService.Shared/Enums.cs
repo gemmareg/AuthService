@@ -4,9 +4,10 @@
     {
         public enum TokenType
         {
-            Undefined,
             Access,
-            Refresh
+            Refresh,
+            EmailConfirmation,
+            PasswordReset,
         }
     }
 }

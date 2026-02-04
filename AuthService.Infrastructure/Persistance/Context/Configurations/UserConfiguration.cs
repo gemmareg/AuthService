@@ -11,7 +11,7 @@ namespace AuthService.Infrastructure.Persistance.Context.Configurations
         {
             base.Configure(builder);
 
-            builder.ToTable("Claims");
+            builder.ToTable("Users");
             builder.HasKey(e => e.Id);
             builder.Property(e => e.Username)
                    .IsRequired()

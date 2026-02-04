@@ -15,11 +15,11 @@ namespace AuthService.Domain
         public bool IsActive { get; private set; }
 
         // Navigation properties
-        private readonly List<UserRole> _userRoles = [];
-        private readonly List<UserPermission> _userPermissions = [];
+        private readonly List<Role> _roles = [];
+        private readonly List<Permission> _permissions = [];
         private readonly List<Token> _tokens = [];
-        public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
-        public IReadOnlyCollection<UserPermission> UserClaims => _userPermissions.AsReadOnly();
+        public IReadOnlyCollection<Role> Roles => _roles.AsReadOnly();
+        public IReadOnlyCollection<Permission> Permissions => _permissions.AsReadOnly();
         public IReadOnlyCollection<Token> Tokens => _tokens.AsReadOnly();
 
         private User() { }
@@ -31,6 +31,7 @@ namespace AuthService.Domain
             Email = email;
             IsActive = true;
             CreatedAt = DateTime.UtcNow;
+            PasswordHash = passwordHash;
             Name = name;
             Surname = surname;
         }
@@ -67,34 +68,45 @@ namespace AuthService.Domain
             return Result.Ok();
         }
 
-        public Result AssignRole(UserRole userRole)
+        public Result AssignRole(Role role)
         {
-            if (_userRoles.Any(r => r.Id == userRole.Id))
+            if (role == null) return Result.Fail(ErrorMessages.ROLE_NOT_NULL);
+            if (_roles.Any(r => r.Id == role.Id))
                 return Result.Fail(ErrorMessages.ROLE_ALREADY_ASSIGNED);
 
-            _userRoles.Add(userRole);
+            _roles.Add(role);
             return Result.Ok();
         }
 
-        public void RevokeRole(UserRole userRole)
+        public Result RevokeRole(Role role)
         {
-            _userRoles.Remove(userRole);
+            if(!_roles.Any(r => r.Id == role.Id))
+                return Result.Fail("Role doesn't exist in user");
+
+            _roles.Remove(role);
+            return Result.Ok();
         }
 
         public Result AddPermissions(Permission permission)
         {
-            if (permission == null) return Result.Fail(ErrorMessages.CLAIM_NOT_NULL);
+            if (permission == null) return Result.Fail(ErrorMessages.PERMISSION_NOT_NULL);
             
-            if (_userPermissions.Any(c => c.Id == permission.Id))
-                return Result.Fail(ErrorMessages.CLAIM_ALREADY_ASSIGNED);
-            var userPermission = UserPermission.Create(this.Id, permission.Id);
-            _userPermissions.Add(userPermission);
+            if (_permissions.Any(c => c.Id == permission.Id))
+                return Result.Fail(ErrorMessages.PERMISSION_ALREADY_ASSIGNED);
+
+            _permissions.Add(permission);
             return Result.Ok();
         }
 
-        public void RemovePermission(UserPermission userPermission)
+        public Result RemovePermission(Permission permission)
         {
-            _userPermissions.Remove(userPermission);
+            if (permission == null) return Result.Fail(ErrorMessages.PERMISSION_NOT_NULL);
+            if (!_permissions.Any(p => p.Id == permission.Id)) 
+                return Result.Fail(ErrorMessages.PERMISSION_DOESNT_EXIST_IN_USER);
+
+            _permissions.Remove(permission);
+
+            return Result.Ok();
         }
     }
 }

@@ -10,11 +10,11 @@ namespace AuthService.Domain
         public string Name { get; private set; } = string.Empty;
 
         // Navigation properties
-        private readonly List<UserRole> _userRoles = new();
-        private readonly List<RolePermission> _roleClaims = new();
+        private readonly List<User> _users = new();
+        private readonly List<Permission> _permissions = new();
 
-        public IReadOnlyCollection<UserRole> UserRoles => _userRoles;
-        public IReadOnlyCollection<RolePermission> RoleClaims => _roleClaims;
+        public IReadOnlyCollection<User> Users => _users;
+        public IReadOnlyCollection<Permission> Permissions => _permissions;
 
         private Role() { }
 
@@ -31,13 +31,13 @@ namespace AuthService.Domain
             return Result<Role>.Ok(role);
         }
 
-        public Result AddRoleClaim(RolePermission roleClaim)
+        public Result AddPermission(Permission permission)
         {
-            if (roleClaim == null) return Result.Fail(ErrorMessages.CLAIM_NOT_NULL);
-            if (_roleClaims.Any(c => c.Id == roleClaim.Id))
-                return Result.Fail(ErrorMessages.CLAIM_ALREADY_ASSIGNED);
+            if (permission == null) return Result.Fail(ErrorMessages.PERMISSION_NOT_NULL);
+            if (_permissions.Any(c => c.Id == permission.Id))
+                return Result.Fail(ErrorMessages.PERMISSION_ALREADY_ASSIGNED);
 
-            _roleClaims.Add(roleClaim);
+            _permissions.Add(permission);
             return Result.Ok();
         }
     }

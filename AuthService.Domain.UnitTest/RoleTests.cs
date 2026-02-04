@@ -23,30 +23,28 @@ namespace AuthService.Domain.UnitTest
         }
 
         [Fact]
-        public void AddClaim_Should_Add_Claim_When_Not_Exists()
+        public void AddPermission_Should_Add_Permission_When_Not_Exists()
         {
             var role = Role.Create("admin").Data!;
-            var claim = Claim.Create("permission", "read:users").Data!;
-            var roleClaim = RoleClaim.Create(role.Id, claim.Id);
+            var permission = Permission.Create("permission", "read:users").Data!;
 
-            var result = role.AddRoleClaim(roleClaim);
+            var result = role.AddPermission(permission);
 
             Assert.True(result.Success);
-            Assert.Contains(roleClaim, role.RoleClaims);
+            Assert.Contains(permission, role.Permissions);
         }
 
         [Fact]
-        public void AddClaim_Should_Fail_When_Claim_Already_Exists()
+        public void AddPermission_Should_Fail_When_Permission_Already_Exists()
         {
             var role = Role.Create("admin").Data!;
-            var claim = Claim.Create("permission", "read:users").Data!;
-            var roleClaim = RoleClaim.Create(role.Id, claim.Id);
+            var permission = Permission.Create("permission", "read:users").Data!;
 
-            role.AddRoleClaim(roleClaim);
-            var result = role.AddRoleClaim(roleClaim);
+            role.AddPermission(permission);
+            var result = role.AddPermission(permission);
 
             Assert.False(result.Success);
-            Assert.Equal(ErrorMessages.CLAIM_ALREADY_ASSIGNED, result.Message);
+            Assert.Equal(ErrorMessages.PERMISSION_ALREADY_ASSIGNED, result.Message);
         }
     }
 }
