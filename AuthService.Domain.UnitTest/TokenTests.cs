@@ -9,7 +9,7 @@ namespace AuthService.Domain.UnitTest
         {
             var token = Token.Create(
                 Guid.NewGuid(),
-                TokenType.Access
+                TokenType.Access, "1234"
             ).Data!;
 
             token.Revoke();
@@ -20,7 +20,7 @@ namespace AuthService.Domain.UnitTest
         [Fact]
         public void Create_Should_Create_Valid_Token()
         {
-            var token = Token.Create(Guid.NewGuid(), TokenType.Access).Data!;
+            var token = Token.Create(Guid.NewGuid(), TokenType.Access, "1234").Data!;
 
             Assert.False(token.IsExpired);
             Assert.True(token.IsValid);
@@ -29,7 +29,7 @@ namespace AuthService.Domain.UnitTest
         [Fact]
         public void Revoked_Token_Should_Not_Be_Valid()
         {
-            var token = Token.Create(Guid.NewGuid(), TokenType.Access).Data!;
+            var token = Token.Create(Guid.NewGuid(), TokenType.Access, "1234").Data!;
 
             token.Revoke();
 
@@ -39,7 +39,7 @@ namespace AuthService.Domain.UnitTest
         [Fact]
         public void Expired_Token_Should_Not_Be_Valid()
         {
-            var token = Token.Create(Guid.NewGuid(), TokenType.Access).Data!;
+            var token = Token.Create(Guid.NewGuid(), TokenType.Access, "1234").Data!;
 
             typeof(Token)
                 .GetProperty(nameof(Token.ExpiresAt))!
@@ -52,7 +52,7 @@ namespace AuthService.Domain.UnitTest
         [Fact]
         public void Create_With_Invalid_TokenType_Should_Fail()
         {
-            var result = Token.Create(Guid.NewGuid(), (TokenType)999);
+            var result = Token.Create(Guid.NewGuid(), (TokenType)999, "1234");
 
             Assert.False(result.Success);
         }
@@ -60,7 +60,7 @@ namespace AuthService.Domain.UnitTest
         [Fact]
         public void Create_With_Empty_UserId_Should_Fail()
         {
-            var result = Token.Create(Guid.Empty, TokenType.Access);
+            var result = Token.Create(Guid.Empty, TokenType.Access, "1234");
 
             Assert.False(result.Success);
         }

@@ -27,7 +27,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService.Shared", "AuthS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService.Domain.UnitTest", "AuthService.Domain.UnitTest\AuthService.Domain.UnitTest.csproj", "{D1D7E54C-DD13-4623-AE36-5F2A5C1A9B58}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService.Infrastructure.IntegrationTests", "AuthService.Infrastructure.IntegrationTests\AuthService.Infrastructure.IntegrationTests.csproj", "{4A074B91-BB69-4290-9846-49A16D73B6B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService.Infrastructure.IntegrationTest", "AuthService.Infrastructure.IntegrationTests\AuthService.Infrastructure.IntegrationTest.csproj", "{4A074B91-BB69-4290-9846-49A16D73B6B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService.Application.UnitTest", "AuthService.Application.UnitTests\AuthService.Application.UnitTest.csproj", "{336E80A9-1212-473A-BB74-4953B6CE4B66}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +65,10 @@ Global
 		{4A074B91-BB69-4290-9846-49A16D73B6B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A074B91-BB69-4290-9846-49A16D73B6B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4A074B91-BB69-4290-9846-49A16D73B6B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{336E80A9-1212-473A-BB74-4953B6CE4B66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{336E80A9-1212-473A-BB74-4953B6CE4B66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{336E80A9-1212-473A-BB74-4953B6CE4B66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{336E80A9-1212-473A-BB74-4953B6CE4B66}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -78,6 +84,7 @@ Global
 		{6E134A4D-0279-4467-ABDF-E7B7300FA572} = {1D9716EC-B184-4518-AE4A-D274751F9F44}
 		{D1D7E54C-DD13-4623-AE36-5F2A5C1A9B58} = {D59D48B1-3A95-4978-A702-806F18847680}
 		{4A074B91-BB69-4290-9846-49A16D73B6B6} = {D59D48B1-3A95-4978-A702-806F18847680}
+		{336E80A9-1212-473A-BB74-4953B6CE4B66} = {D59D48B1-3A95-4978-A702-806F18847680}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DBC5662E-2296-4C92-B023-54ECF01AC1AB}
