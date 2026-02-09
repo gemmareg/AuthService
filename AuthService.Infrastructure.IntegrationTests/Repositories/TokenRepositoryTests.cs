@@ -25,7 +25,7 @@ namespace AuthService.Infrastructure.IntegrationTests.Repositories
         {
             // Arrange
             var user = User.Create("johndoe", "johndoe@test.com", "hashedpassword", "John", "Doe").Data!;
-            var token = Token.Create(user.Id, TokenType.Access).Data!;
+            var token = Token.Create(user.Id, TokenType.Access, "1234").Data!;
 
             // Create token
             await _userRepository.AddAsync(user);

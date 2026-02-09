@@ -11,19 +11,21 @@ namespace AuthService.Domain
         public TokenType Type { get; private set; }
         public DateTime ExpiresAt { get; private set; }
         public bool IsRevoked { get; private set; }
+        public string TokenHash { get; private set; }
         public User? User { get; private set; }
 
         public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
         public bool IsValid => !IsExpired && !IsRevoked;
 
-        private Token(Guid userId, TokenType type)
+        private Token(Guid userId, TokenType type, string tokenHash)
         {
             UserId = userId;
             Type = type;
             ExpiresAt = DateTime.UtcNow.Add(TokenPolicies.GetExpiration(type));
+            TokenHash = tokenHash;
         }
 
-        public static Result<Token> Create(Guid userId, TokenType type)
+        public static Result<Token> Create(Guid userId, TokenType type, string tokenHash)
         {
             if (userId == Guid.Empty)
                 return Result<Token>.Fail("UserId is required");
@@ -31,7 +33,7 @@ namespace AuthService.Domain
             if (!Enum.IsDefined(typeof(TokenType), type))
                 return Result<Token>.Fail("Invalid token type");
 
-            return Result<Token>.Ok(new Token(userId, type));
+            return Result<Token>.Ok(new Token(userId, type, tokenHash));
         }
 
         public void Revoke()

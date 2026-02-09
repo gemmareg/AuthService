@@ -36,14 +36,18 @@ namespace AuthService.Domain
             Surname = surname;
         }
 
-        public static Result<User> Create(string username, string email, string passwordHash, string? name, string? surname)
+        public static Result<User> Create(string username, string email, string passwordHash, string name, string surname)
         {
             if (string.IsNullOrWhiteSpace(username))
                 return Result<User>.Fail(ErrorMessages.USERNAME_NOT_NULL);
             if (string.IsNullOrWhiteSpace(email))
-                return Result<User>.Fail("Email is required");
+                return Result<User>.Fail(ErrorMessages.EMAIL_NOT_NULL);
             if(string.IsNullOrWhiteSpace(passwordHash))
                 return Result<User>.Fail("Password hash is required");
+            if(string.IsNullOrWhiteSpace(name))
+                return Result<User>.Fail("Name is required");
+            if (string.IsNullOrWhiteSpace(surname))
+                return Result<User>.Fail("Surname is required");
 
             var user = new User(Guid.NewGuid(), username, email, passwordHash, name, surname);
 
