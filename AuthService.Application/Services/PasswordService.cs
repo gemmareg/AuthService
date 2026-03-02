@@ -1,9 +1,10 @@
 ﻿using AuthService.Application.Abstractions.Services;
+using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 
 namespace AuthService.Application.Services
 {
-    public class PasswordService : IPasswordService
+    public class PasswordService(ILogger<PasswordService> logger) : IPasswordService
     {
         private const int SaltSize = 16;      // 128 bits
         private const int KeySize = 32;       // 256 bits
@@ -21,6 +22,8 @@ namespace AuthService.Application.Services
                 Algorithm,
                 KeySize
             );
+
+            logger.LogDebug("Generated password hash using {Iterations} iterations", Iterations);
 
             // Guardamos todo junto: iterations.salt.hash
             return $"{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
@@ -43,7 +46,10 @@ namespace AuthService.Application.Services
                 hash.Length
             );
 
-            return CryptographicOperations.FixedTimeEquals(inputHash, hash);
+            var result = CryptographicOperations.FixedTimeEquals(inputHash, hash);
+            if (!result) logger.LogWarning("Password verification failed");
+
+            return result;
         }
     }
 }

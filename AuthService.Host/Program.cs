@@ -1,10 +1,12 @@
 using AuthService.Application.Extensions;
+using AuthService.Host.Extensions;
 using AuthService.Host.Middleware;
 using AuthService.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddHostServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices(builder.Configuration);
 

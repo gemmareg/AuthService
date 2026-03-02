@@ -1,8 +1,10 @@
 ﻿using AuthService.Application.Abstractions.Repositories;
+using AuthService.Application.Abstractions.UnitOfWork;
 using AuthService.Application.Extensions.Options;
 using AuthService.Application.Services;
 using AuthService.Domain;
 using AuthService.Domain.Policies;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,6 +17,9 @@ namespace AuthService.Application.UnitTests.Services
     {
         private readonly TokenService _tokenService;
         private readonly Mock<ITokenRepository> _tokenRepositoryMock;
+        private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+        private readonly Mock<ILogger<TokenService>> _loggerMock = new();
+
         private JwtSettings JwtSettingsFixture => new()
         {
             Issuer = "TestIssuer",
@@ -25,8 +30,10 @@ namespace AuthService.Application.UnitTests.Services
         public TokenServiceTests()
         {
             _tokenRepositoryMock = new Mock<ITokenRepository>();
+            _unitOfWorkMock = new Mock<IUnitOfWork>();
+            _loggerMock = new Mock<ILogger<TokenService>>();
             var options = Options.Create(JwtSettingsFixture);
-            _tokenService = new TokenService(_tokenRepositoryMock.Object, options);
+            _tokenService = new TokenService(_tokenRepositoryMock.Object, options, _unitOfWorkMock.Object, _loggerMock.Object);
         }
 
         [Fact]

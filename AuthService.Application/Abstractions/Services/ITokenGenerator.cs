@@ -4,7 +4,7 @@ using AuthService.Shared.Result.Generic;
 
 namespace AuthService.Application.Abstractions.Services
 {
-    public interface ITokenService
+    public interface ITokenGenerator
     {
         string GenerateAccessToken(Guid userId, string email, IEnumerable<string> roles);
         Task<Result<RefreshToken>> GenerateRefreshToken(Guid userId);

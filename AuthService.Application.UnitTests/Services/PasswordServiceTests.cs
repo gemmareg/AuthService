@@ -1,10 +1,19 @@
 ﻿using AuthService.Application.Services;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace AuthService.Application.UnitTest.Services
 {
     public class PasswordServiceTests
     {
-        private readonly PasswordService _service = new PasswordService();
+
+        private readonly Mock<ILogger<PasswordService>> _loggerMock = new();
+        private readonly PasswordService _service;
+
+        public PasswordServiceTests()
+        {
+            _service = new PasswordService(_loggerMock.Object);
+        }
 
         [Fact]
         public void Hash_ShouldReturnNonEmptyString()

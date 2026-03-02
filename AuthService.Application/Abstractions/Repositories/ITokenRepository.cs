@@ -5,5 +5,6 @@ namespace AuthService.Application.Abstractions.Repositories
 {
     public interface ITokenRepository : IRepository<Token>
     {
+        Task<Token?> GetByTokenHashAsync(string tokenHash);
     }
 }
