@@ -8,8 +8,8 @@ namespace AuthService.Domain
     public class User : AuditableEntity
     {
         public string Username { get; private set; }
-        public string? Name { get; private set; }
-        public string? Surname { get; private set; }
+        public string Name { get; private set; }
+        public string Surname { get; private set; }
         public string Email { get; private set; }
         public string PasswordHash { get; private set; }
         public bool IsActive { get; private set; }
@@ -24,7 +24,7 @@ namespace AuthService.Domain
 
         private User() { }
 
-        private User(Guid id, string username, string email, string passwordHash, string? name, string? surname)
+        private User(Guid id, string username, string email, string passwordHash, string name, string surname)
         {
             Id = id;
             Username = username;

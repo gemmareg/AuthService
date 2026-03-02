@@ -1,17 +1,24 @@
-﻿using AuthService.Application.Abstractions.Repositories;
+﻿using AuthService.Application.Abstractions.Events;
+using AuthService.Application.Abstractions.Repositories;
 using AuthService.Application.Abstractions.Services;
+using AuthService.Application.Abstractions.UnitOfWork;
 using AuthService.Application.Dtos;
+using AuthService.Application.Dtos.Events;
 using AuthService.Domain;
 using AuthService.Domain.ValueObjects;
 using AuthService.Shared.Result.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace AuthService.Application.Services
 {
     public class UserService(
         IPasswordService passwordService,
-        ITokenService tokenService,
+        ITokenGenerator tokenService,
         IUserRepository userRepository,
-        IRoleRepository roleRepository) : IUserService
+        IRoleRepository roleRepository,
+        IEventPublisher publisher,
+        IUnitOfWork unitOfWork,
+        ILogger<UserService> logger) : IUserService
     {
         public async Task<Result<AuthResponse>> RegisterAsync(string name, string surname, string email, string password)
         {
@@ -19,7 +26,10 @@ namespace AuthService.Application.Services
             var role = await roleRepository.GetByNameAsync("User");
 
             if (existingUser is not null)
+            {
+                logger.LogWarning("Registration attempt with already registered email: {Email}", email);
                 return Result<AuthResponse>.Fail("Email already registered");
+            }
 
             var passwordHash = passwordService.Hash(password);
             var username = await GenerateUsername(name, surname);
@@ -31,12 +41,17 @@ namespace AuthService.Application.Services
                 name,
                 surname);
 
-            if (!userResult.Success) return Result<AuthResponse>.Fail(userResult.Message);
+            if (!userResult.Success)
+            {
+                logger.LogError("User creation failed for email: {Email}. Reason: {Reason}", email, userResult.Message);
+                return Result<AuthResponse>.Fail(userResult.Message);
+            }
 
             var user = userResult.Data!;
             user.AssignRole(role);
 
             await userRepository.AddAsync(user);
+            await unitOfWork.SaveChangesAsync();
 
             var accessToken = tokenService.GenerateAccessToken(
                 user.Id,
@@ -44,8 +59,16 @@ namespace AuthService.Application.Services
                 user.Roles.Select(r => r.Name));
 
             var refreshTokenResult = await tokenService.GenerateRefreshToken(user.Id);
-            if(!refreshTokenResult.Success) return Result<AuthResponse>.Fail(refreshTokenResult.Message);
+            if (!refreshTokenResult.Success)
+            {
+                logger.LogError("Refresh token generation failed for user ID: {UserId}. Reason: {Reason}", user.Id, refreshTokenResult.Message);
+                return Result<AuthResponse>.Fail(refreshTokenResult.Message);
+            }
             var refreshToken = refreshTokenResult.Data!;
+
+            logger.LogInformation("User registered successfully with email: {Email}", email);
+
+            publishEvent(user);
 
             return Result<AuthResponse>.Ok(
                 new AuthResponse()
@@ -78,6 +101,17 @@ namespace AuthService.Application.Services
                     .Max();
 
             return username + (nextNumber + 1);
+        }
+
+        private void publishEvent(User user)
+        {
+            var evt = new UserRegisteredEvent
+            {
+                UserId = user.Id.ToString(),
+                Name = user.Name,
+            };
+
+            publisher.PublishUserRegistered(evt);
         }
     }
 }

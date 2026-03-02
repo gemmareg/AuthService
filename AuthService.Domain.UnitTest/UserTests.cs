@@ -12,8 +12,8 @@ namespace AuthService.Domain.UnitTest
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal("jose", result.Data!.Username);
-            Assert.Equal("jose@email.com", result.Data!.Email);
+            Assert.Equal("johndoe", result.Data!.Username);
+            Assert.Equal("johndoe@email.com", result.Data!.Email);
             Assert.True(result.Data!.IsActive);
         }
 

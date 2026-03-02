@@ -9,7 +9,7 @@ namespace AuthService.Host.Controllers.v1
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class UserController(IMediator mediator) : ControllerBase
+    public class UserController(IMediator mediator, ILogger<UserController> logger) : ControllerBase
     {
         [HttpPost]
         [ProducesResponseType(typeof(AuthResponse), (int)HttpStatusCode.OK)]
@@ -17,6 +17,8 @@ namespace AuthService.Host.Controllers.v1
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<AuthResponse>> CreateUser(CreateUserCommand command)
         {
+            logger.LogInformation("Received CreateUserCommand: {@Command}", command);
+
             var result = await mediator.Send(command);
 
             return result.ToActionResult();

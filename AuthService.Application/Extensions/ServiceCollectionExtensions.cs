@@ -15,7 +15,8 @@ namespace AuthService.Application.Extensions
 
             services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
 
-            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<ITokenGenerator, TokenService>();
+            services.AddScoped<ITokenRefresher, TokenService>();
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<IUserService, UserService>();
 

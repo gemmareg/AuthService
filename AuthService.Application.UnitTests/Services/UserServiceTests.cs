@@ -1,11 +1,14 @@
-﻿using AuthService.Application.Abstractions.Repositories;
+﻿using AuthService.Application.Abstractions.Events;
+using AuthService.Application.Abstractions.Repositories;
 using AuthService.Application.Abstractions.Services;
+using AuthService.Application.Abstractions.UnitOfWork;
 using AuthService.Application.Dtos;
 using AuthService.Application.Services;
 using AuthService.Domain;
 using AuthService.Domain.Policies;
 using AuthService.Shared;
 using AuthService.Shared.Result.Generic;
+using Microsoft.Extensions.Logging;
 using Moq;
 using static AuthService.Shared.Enums;
 
@@ -14,9 +17,14 @@ namespace AuthService.Application.UnitTest.Services
     public class UserServiceTests
     {
         private readonly Mock<IPasswordService> _passwordServiceMock;
-        private readonly Mock<ITokenService> _tokenServiceMock;
+        private readonly Mock<ITokenGenerator> _tokenServiceMock;
         private readonly Mock<IUserRepository> _userRepositoryMock;
         private readonly IUserService _userService;
+        private readonly Mock<IRoleRepository> _roleRepositoryMock;
+        private readonly Mock<IEventPublisher> _eventPublisher;
+        private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+        private readonly Mock<ILogger<UserService>> _loggerMock = new();
+
 
         private const string USERNAME = "johndoe";
         private const string EMAIL = "johndoe@email.com";
@@ -28,12 +36,22 @@ namespace AuthService.Application.UnitTest.Services
         public UserServiceTests()
         {
             _passwordServiceMock = new Mock<IPasswordService>();
-            _tokenServiceMock = new Mock<ITokenService>();
+            _tokenServiceMock = new Mock<ITokenGenerator>();
             _userRepositoryMock = new Mock<IUserRepository>();
+            _roleRepositoryMock = new Mock<IRoleRepository>();
+            _eventPublisher = new Mock<IEventPublisher>();
+            _unitOfWorkMock = new Mock<IUnitOfWork>(); 
+            _loggerMock = new Mock<ILogger<UserService>>();
             _userService = new UserService(
                 _passwordServiceMock.Object,
                 _tokenServiceMock.Object,
-                _userRepositoryMock.Object);
+                _userRepositoryMock.Object,
+                _roleRepositoryMock.Object,
+                _eventPublisher.Object,
+                _unitOfWorkMock.Object,
+                _loggerMock.Object);
+
+            _roleRepositoryMock.Setup(r => r.GetByNameAsync(It.IsAny<string>())).ReturnsAsync(Role.Create("User").Data!);
         }
 
         [Fact]
