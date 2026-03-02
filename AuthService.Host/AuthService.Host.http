@@ -1,6 +1,26 @@
 @AuthService.Host_HostAddress = http://localhost:5195
+@BearerToken = PON_AQUI_EL_ACCESS_TOKEN_GENERADO_EN_CreateUser
 
 GET {{AuthService.Host_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# 1) Crea usuario para obtener AccessToken (Bearer)
+POST {{AuthService.Host_HostAddress}}/api/user
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "John",
+  "surname": "Doe",
+  "email": "john.doe@getauth.com",
+  "password": "Pass1234*"
+}
+
+###
+
+# 2) Usa el mismo AccessToken en Authorization: Bearer
+GET {{AuthService.Host_HostAddress}}/api/user/authentication
+Accept: application/json
+Authorization: Bearer {{BearerToken}}
