@@ -28,6 +28,7 @@ await app.Services.CreateDBSeed();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
