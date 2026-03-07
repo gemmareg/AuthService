@@ -80,6 +80,43 @@ namespace AuthService.Application.Services
             );
         }
 
+
+        public async Task<Result<AuthResponse>> LoginAsync(string email, string password)
+        {
+            var user = await userRepository.GetByEmailWithRolesAsync(email);
+
+            if (user is null || !passwordService.Verify(password, user.PasswordHash))
+            {
+                logger.LogWarning("Failed login attempt for email: {Email}", email);
+                return Result<AuthResponse>.Fail("Invalid email or password");
+            }
+
+            var accessToken = tokenService.GenerateAccessToken(
+                user.Id,
+                user.Email,
+                user.Roles.Select(r => r.Name));
+
+            var refreshTokenResult = await tokenService.GenerateRefreshToken(user.Id);
+            if (!refreshTokenResult.Success)
+            {
+                logger.LogError("Refresh token generation failed for user ID: {UserId}. Reason: {Reason}", user.Id, refreshTokenResult.Message);
+                return Result<AuthResponse>.Fail(refreshTokenResult.Message);
+            }
+
+            await unitOfWork.SaveChangesAsync();
+
+            var refreshToken = refreshTokenResult.Data!;
+
+            logger.LogInformation("User logged in successfully with email: {Email}", email);
+
+            return Result<AuthResponse>.Ok(new AuthResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken.Token,
+                RefreshTokenExpiration = refreshToken.Expiration
+            });
+        }
+
         private async Task<string> GenerateUsername(string name, string surname)
         {
             var username = (name + surname).ToLower().Replace(" ", "");
