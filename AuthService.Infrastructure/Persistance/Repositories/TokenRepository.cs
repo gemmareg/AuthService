@@ -13,8 +13,8 @@ namespace AuthService.Infrastructure.Persistance.Repositories
         }
 
         public async Task<Token?> GetByTokenHashAsync(string tokenHash)
-        {
-            return await _context.Tokens.FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
-        }
+            => await _context.Tokens
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
     }
 }
