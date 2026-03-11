@@ -34,5 +34,28 @@ namespace AuthService.Domain.UnitTest
             Assert.False(result.Success);
             Assert.Equal(ErrorMessages.EMAIL_NOT_NULL, result.Message);
         }
+        [Fact]
+        public void SoftDelete_Should_Set_IsActive_To_False_When_User_Is_Active()
+        {
+            var user = User.Create("johndoe", "johndoe@email.com", "1234", "John", "Doe").Data!;
+
+            var result = user.SoftDelete();
+
+            Assert.True(result.Success);
+            Assert.False(user.IsActive);
+        }
+
+        [Fact]
+        public void SoftDelete_Should_Fail_When_User_Is_Already_Inactive()
+        {
+            var user = User.Create("johndoe", "johndoe@email.com", "1234", "John", "Doe").Data!;
+            user.SoftDelete();
+
+            var result = user.SoftDelete();
+
+            Assert.False(result.Success);
+            Assert.Equal("User is already inactive", result.Message);
+        }
+
     }
 }
