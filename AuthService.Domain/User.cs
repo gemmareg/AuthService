@@ -72,6 +72,15 @@ namespace AuthService.Domain
             return Result.Ok();
         }
 
+        public Result SoftDelete()
+        {
+            if (!IsActive)
+                return Result.Fail("User is already inactive");
+
+            IsActive = false;
+            return Result.Ok();
+        }
+
         public Result AssignRole(Role role)
         {
             if (role == null) return Result.Fail(ErrorMessages.ROLE_NOT_NULL);
@@ -80,6 +89,11 @@ namespace AuthService.Domain
 
             _roles.Add(role);
             return Result.Ok();
+        }
+
+        public void Activate()
+        {
+           IsActive = true;
         }
 
         public Result RevokeRole(Role role)

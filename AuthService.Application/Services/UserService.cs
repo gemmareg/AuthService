@@ -3,10 +3,11 @@ using AuthService.Application.Abstractions.Repositories;
 using AuthService.Application.Abstractions.Services;
 using AuthService.Application.Abstractions.UnitOfWork;
 using AuthService.Application.Dtos;
-using AuthService.Application.Dtos.Events;
+using Auth.Contracts.Events;
 using AuthService.Domain;
 using AuthService.Domain.ValueObjects;
 using AuthService.Shared.Result.Generic;
+using AuthService.Shared.Result.NonGeneric;
 using Microsoft.Extensions.Logging;
 
 namespace AuthService.Application.Services
@@ -68,7 +69,7 @@ namespace AuthService.Application.Services
 
             logger.LogInformation("User registered successfully with email: {Email}", email);
 
-            publishEvent(user);
+            PublishRegisteredEvent(user);
 
             return Result<AuthResponse>.Ok(
                 new AuthResponse()
@@ -81,6 +82,33 @@ namespace AuthService.Application.Services
         }
 
 
+        public async Task<Result> SoftDeleteAsync(Guid userId)
+        {
+            var user = await userRepository.GetByIdAsync(userId);
+
+            if (user is null)
+            {
+                logger.LogWarning("Soft delete attempted for non-existent user ID: {UserId}", userId);
+                return Result.Fail("User not found");
+            }
+
+            var softDeleteResult = user.SoftDelete();
+            if (!softDeleteResult.Success)
+            {
+                logger.LogWarning("Soft delete failed for user ID: {UserId}. Reason: {Reason}", userId, softDeleteResult.Message);
+                return Result.Fail(softDeleteResult.Message);
+            }
+
+            await userRepository.UpdateAsync(user);
+            await unitOfWork.SaveChangesAsync();
+
+            logger.LogInformation("User soft deleted successfully with ID: {UserId}", userId);
+
+            PublishSoftDeletedEvent(user);
+
+            return Result.Ok();
+        }
+
         public async Task<Result<AuthResponse>> LoginAsync(string email, string password)
         {
             var user = await userRepository.GetByEmailWithRolesAsync(email);
@@ -90,6 +118,9 @@ namespace AuthService.Application.Services
                 logger.LogWarning("Failed login attempt for email: {Email}", email);
                 return Result<AuthResponse>.Fail("Invalid email or password");
             }
+
+            user.Activate();
+            await unitOfWork.SaveChangesAsync();
 
             var accessToken = tokenService.GenerateAccessToken(
                 user.Id,
@@ -140,7 +171,7 @@ namespace AuthService.Application.Services
             return username + (nextNumber + 1);
         }
 
-        private void publishEvent(User user)
+        private void PublishRegisteredEvent(User user)
         {
             var evt = new UserRegisteredEvent
             {
@@ -149,6 +180,17 @@ namespace AuthService.Application.Services
             };
 
             publisher.PublishUserRegistered(evt);
+        }
+
+        private void PublishSoftDeletedEvent(User user)
+        {
+            var evt = new UserSoftDeletedEvent
+            {
+                UserId = user.Id.ToString(),
+                Email = user.Email
+            };
+
+            publisher.PublishUserSoftDeleted(evt);
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 using AuthService.Application.Abstractions.Events;
-using AuthService.Application.Dtos.Events;
+using Auth.Contracts.Events;
 using RabbitMQ.Client;
 
 public class EventPublisher : IEventPublisher
@@ -28,6 +28,19 @@ public class EventPublisher : IEventPublisher
         _channel.BasicPublish(
             exchange: "auth.events",
             routingKey: "user.registered",
+            basicProperties: null,
+            body: body
+        );
+    }
+
+    public void PublishUserSoftDeleted(UserSoftDeletedEvent evt)
+    {
+        var json = JsonSerializer.Serialize(evt);
+        var body = Encoding.UTF8.GetBytes(json);
+
+        _channel.BasicPublish(
+            exchange: "auth.events",
+            routingKey: "user.soft-deleted",
             basicProperties: null,
             body: body
         );

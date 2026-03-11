@@ -172,5 +172,37 @@ namespace AuthService.Application.UnitTest.Services
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
+        [Fact]
+        public async Task SoftDeleteAsync_ReturnsFail_WhenUserDoesNotExist()
+        {
+            // Arrange
+            _userRepositoryMock.Setup(p => p.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
+
+            // Act
+            var result = await _userService.SoftDeleteAsync(Guid.NewGuid());
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("User not found", result.Message);
+        }
+
+        [Fact]
+        public async Task SoftDeleteAsync_ReturnsOk_WhenUserExists()
+        {
+            // Arrange
+            var user = User.Create(USERNAME, EMAIL, PASSWORD_HASHED, NAME, SURNAME).Data!;
+            _userRepositoryMock.Setup(p => p.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(user);
+
+            // Act
+            var result = await _userService.SoftDeleteAsync(user.Id);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.False(user.IsActive);
+            _userRepositoryMock.Verify(r => r.UpdateAsync(It.Is<User>(u => u.Id == user.Id && !u.IsActive)), Times.Once);
+            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _eventPublisher.Verify(e => e.PublishUserSoftDeleted(It.IsAny<Auth.Contracts.Events.UserSoftDeletedEvent>()), Times.Once);
+        }
+
     }
 }

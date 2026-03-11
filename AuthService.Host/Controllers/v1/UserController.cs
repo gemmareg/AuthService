@@ -1,6 +1,7 @@
 ﻿using AuthService.Application.Dtos;
 using AuthService.Application.Features.Users.Commands.CreateUser;
 using AuthService.Application.Features.Users.Commands.LoginUser;
+using AuthService.Application.Features.Users.Commands.SoftDeleteUser;
 using AuthService.Host.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +23,20 @@ namespace AuthService.Host.Controllers.v1
             logger.LogInformation("Received CreateUserCommand: {@Command}", command);
 
             var result = await mediator.Send(command);
+
+            return result.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpDelete("{userId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> SoftDelete(Guid userId)
+        {
+            logger.LogInformation("Received SoftDeleteUserCommand for userId: {UserId}", userId);
+
+            var result = await mediator.Send(new SoftDeleteUserCommand { UserId = userId });
 
             return result.ToActionResult();
         }
