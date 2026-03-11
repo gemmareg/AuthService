@@ -169,7 +169,7 @@ namespace AuthService.Application.UnitTest.Services
             Assert.NotNull(result.Data);
             Assert.Equal("valid-access-token", result.Data!.AccessToken);
             Assert.Equal("valid-refresh-token", result.Data.RefreshToken);
-            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
     }
