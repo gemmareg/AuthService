@@ -12,7 +12,13 @@ namespace AuthService.Infrastructure.Persistance.Repositories
         {
         }
 
-        public Task<User?> GetByEmailAsync(string email) => _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        public Task<User?> GetByEmailAsync(string email)
+            => _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        public Task<User?> GetByEmailWithRolesAsync(string email)
+            => _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Email == email);
 
         public Task<List<User>> GetByUsernameAsync(string username)
             => _context.Users.Where(u => u.Username.StartsWith(username)).ToListAsync();

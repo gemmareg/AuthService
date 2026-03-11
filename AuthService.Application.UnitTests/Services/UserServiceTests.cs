@@ -111,5 +111,66 @@ namespace AuthService.Application.UnitTest.Services
             Assert.True(result.Success);
             _userRepositoryMock.Verify(r => r.AddAsync(It.Is<User>(u => u.Username == expectedUsername)),Times.Once);
         }
+
+
+        [Fact]
+        public async Task LoginAsync_ReturnsFail_WhenUserDoesNotExist()
+        {
+            // Arrange
+            _userRepositoryMock.Setup(p => p.GetByEmailWithRolesAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
+
+            // Act
+            var result = await _userService.LoginAsync(EMAIL, PASSWORD);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("Invalid email or password", result.Message);
+        }
+
+        [Fact]
+        public async Task LoginAsync_ReturnsFail_WhenPasswordIsInvalid()
+        {
+            // Arrange
+            var user = User.Create(USERNAME, EMAIL, PASSWORD_HASHED, NAME, SURNAME).Data!;
+            _userRepositoryMock.Setup(p => p.GetByEmailWithRolesAsync(It.IsAny<string>())).ReturnsAsync(user);
+            _passwordServiceMock.Setup(p => p.Verify(PASSWORD, PASSWORD_HASHED)).Returns(false);
+
+            // Act
+            var result = await _userService.LoginAsync(EMAIL, PASSWORD);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("Invalid email or password", result.Message);
+        }
+
+        [Fact]
+        public async Task LoginAsync_ReturnsOk_WhenCredentialsAreValid()
+        {
+            // Arrange
+            var user = User.Create(USERNAME, EMAIL, PASSWORD_HASHED, NAME, SURNAME).Data!;
+            user.AssignRole(Role.Create("User").Data!);
+
+            var refreshToken = new RefreshToken
+            {
+                Expiration = DateTime.UtcNow.Add(TokenPolicies.GetExpiration(TokenType.Refresh)),
+                Token = "valid-refresh-token"
+            };
+
+            _userRepositoryMock.Setup(p => p.GetByEmailWithRolesAsync(It.IsAny<string>())).ReturnsAsync(user);
+            _passwordServiceMock.Setup(p => p.Verify(PASSWORD, PASSWORD_HASHED)).Returns(true);
+            _tokenServiceMock.Setup(p => p.GenerateAccessToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>())).Returns("valid-access-token");
+            _tokenServiceMock.Setup(p => p.GenerateRefreshToken(It.IsAny<Guid>())).ReturnsAsync(Result<RefreshToken>.Ok(refreshToken));
+
+            // Act
+            var result = await _userService.LoginAsync(EMAIL, PASSWORD);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal("valid-access-token", result.Data!.AccessToken);
+            Assert.Equal("valid-refresh-token", result.Data.RefreshToken);
+            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
     }
 }

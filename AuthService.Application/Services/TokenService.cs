@@ -42,11 +42,11 @@ namespace AuthService.Application.Services
                 SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
-        {
-            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new(JwtRegisteredClaimNames.Email, email),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+            {
+                new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+                new(JwtRegisteredClaimNames.Email, email),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
             claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 

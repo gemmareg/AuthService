@@ -7,6 +7,8 @@ namespace AuthService.Application.Abstractions.Repositories
     {
         Task<User?> GetByEmailAsync(string email);
 
+        Task<User?> GetByEmailWithRolesAsync(string email);
+
         Task<List<User>> GetByUsernameAsync(string username);
     }
 }
