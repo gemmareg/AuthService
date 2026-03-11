@@ -91,6 +91,11 @@ namespace AuthService.Domain
             return Result.Ok();
         }
 
+        public void Activate()
+        {
+           IsActive = true;
+        }
+
         public Result RevokeRole(Role role)
         {
             if(!_roles.Any(r => r.Id == role.Id))

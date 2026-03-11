@@ -27,7 +27,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
-
+        [Authorize]
         [HttpDelete("{userId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

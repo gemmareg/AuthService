@@ -119,6 +119,9 @@ namespace AuthService.Application.Services
                 return Result<AuthResponse>.Fail("Invalid email or password");
             }
 
+            user.Activate();
+            await unitOfWork.SaveChangesAsync();
+
             var accessToken = tokenService.GenerateAccessToken(
                 user.Id,
                 user.Email,
