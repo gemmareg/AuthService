@@ -113,7 +113,7 @@ namespace AuthService.Application.Services
                 return Result.Fail(softDeleteResult.Message);
             }
 
-            user.SetUpdated(requesterIsAdmin ? $"Admin:{requesterId}" : $"Self:{requesterId}");
+            user.SetUpdated(requesterIsAdmin && requesterId != userId ? $"Admin:{requesterId}" : $"Self:{requesterId}");
 
             await userRepository.UpdateAsync(user);
             await unitOfWork.SaveChangesAsync();
