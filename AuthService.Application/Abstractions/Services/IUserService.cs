@@ -8,6 +8,6 @@ namespace AuthService.Application.Abstractions.Services
     {
         Task<Result<AuthResponse>> RegisterAsync(string name, string surname, string email, string password);
         Task<Result<AuthResponse>> LoginAsync(string email, string password);
-        Task<Result> SoftDeleteAsync(Guid userId);
+        Task<Result> SoftDeleteAsync(Guid userId, Guid requesterId);
     }
 }

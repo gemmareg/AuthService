@@ -96,10 +96,16 @@ namespace AuthService.Application.Services
 
             var user = token.User;
 
+            if (!user.IsActive)
+            {
+                _logger.LogWarning("Attempt to refresh token for inactive user {UserId}", user.Id);
+                return Result<AuthResponse>.Fail("User account is inactive");
+            }
+
             var newAccessToken = GenerateAccessToken(
-                user.Id,
-                user.Email,
-                user.Roles.Select(r => r.Name));
+            user.Id,
+            user.Email,
+            user.Roles.Select(r => r.Name));
 
             var newRefreshToken = await GenerateRefreshToken(user.Id);
             token.Revoke();

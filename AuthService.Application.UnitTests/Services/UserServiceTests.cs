@@ -2,6 +2,7 @@
 using AuthService.Application.Abstractions.Repositories;
 using AuthService.Application.Abstractions.Services;
 using AuthService.Application.Abstractions.UnitOfWork;
+using AuthService.Shared.Constants;
 using AuthService.Application.Dtos;
 using AuthService.Application.Services;
 using AuthService.Domain;
@@ -172,6 +173,28 @@ namespace AuthService.Application.UnitTest.Services
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
+
+        [Fact]
+        public async Task LoginAsync_ReturnsFail_WhenUserWasDeactivatedByAdmin()
+        {
+            // Arrange
+            var user = User.Create(USERNAME, EMAIL, PASSWORD_HASHED, NAME, SURNAME).Data!;
+            user.AssignRole(Role.Create("User").Data!);
+            user.SoftDelete();
+            user.SetUpdated($"Admin:{Guid.NewGuid()}");
+
+            _userRepositoryMock.Setup(p => p.GetByEmailWithRolesAsync(It.IsAny<string>())).ReturnsAsync(user);
+            _passwordServiceMock.Setup(p => p.Verify(PASSWORD, PASSWORD_HASHED)).Returns(true);
+
+            // Act
+            var result = await _userService.LoginAsync(EMAIL, PASSWORD);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal(UserErrorMessages.AccountDeactivatedByAdmin, result.Message);
+            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        }
+
         [Fact]
         public async Task SoftDeleteAsync_ReturnsFail_WhenUserDoesNotExist()
         {
@@ -179,11 +202,31 @@ namespace AuthService.Application.UnitTest.Services
             _userRepositoryMock.Setup(p => p.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
 
             // Act
-            var result = await _userService.SoftDeleteAsync(Guid.NewGuid());
+            var result = await _userService.SoftDeleteAsync(Guid.NewGuid(), Guid.NewGuid());
 
             // Assert
             Assert.False(result.Success);
             Assert.Equal("User not found", result.Message);
+        }
+
+
+        [Fact]
+        public async Task SoftDeleteAsync_ReturnsFail_WhenRequesterIsNotOwnerOrAdmin()
+        {
+            // Arrange
+            var target = User.Create("target", "target@email.com", PASSWORD_HASHED, NAME, SURNAME).Data!;
+            var requester = User.Create("other", "other@email.com", PASSWORD_HASHED, NAME, SURNAME).Data!;
+            requester.AssignRole(Role.Create("User").Data!);
+
+            _userRepositoryMock.Setup(p => p.GetByIdAsync(target.Id)).ReturnsAsync(target);
+            _userRepositoryMock.Setup(p => p.GetByIdWithRolesAsync(requester.Id)).ReturnsAsync(requester);
+
+            // Act
+            var result = await _userService.SoftDeleteAsync(target.Id, requester.Id);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal(UserErrorMessages.SoftDeleteForbidden, result.Message);
         }
 
         [Fact]
@@ -191,10 +234,12 @@ namespace AuthService.Application.UnitTest.Services
         {
             // Arrange
             var user = User.Create(USERNAME, EMAIL, PASSWORD_HASHED, NAME, SURNAME).Data!;
+            user.AssignRole(Role.Create("User").Data!);
             _userRepositoryMock.Setup(p => p.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(user);
+            _userRepositoryMock.Setup(p => p.GetByIdWithRolesAsync(user.Id)).ReturnsAsync(user);
 
             // Act
-            var result = await _userService.SoftDeleteAsync(user.Id);
+            var result = await _userService.SoftDeleteAsync(user.Id, user.Id);
 
             // Assert
             Assert.True(result.Success);

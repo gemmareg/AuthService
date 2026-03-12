@@ -38,7 +38,8 @@ namespace AuthService.Infrastructure.IntegrationTests.Repositories
             // Update user: data, roles and permissions
 
             //update data
-            retrievedUser.UpdateData("Johnny", "Doer", "johnnydoer@test.com");
+            retrievedUser.UpdateName("Johnny", "Doer");
+            retrievedUser.UpdateEmail("johnnydoer@test.com");
             retrievedUser.UpdatePassword("newhashedpassword");
             await _databaseFixture.DbContext.SaveChangesAsync();
 

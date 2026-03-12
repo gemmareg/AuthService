@@ -2,11 +2,13 @@
 using AuthService.Application.Features.Users.Commands.CreateUser;
 using AuthService.Application.Features.Users.Commands.LoginUser;
 using AuthService.Application.Features.Users.Commands.SoftDeleteUser;
+using AuthService.Application.Features.Users.Commands.UpdateUser;
 using AuthService.Host.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Claims;
 
 namespace AuthService.Host.Controllers.v1
 {
@@ -31,12 +33,24 @@ namespace AuthService.Host.Controllers.v1
         [HttpDelete("{userId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> SoftDelete(Guid userId)
         {
             logger.LogInformation("Received SoftDeleteUserCommand for userId: {UserId}", userId);
 
-            var result = await mediator.Send(new SoftDeleteUserCommand { UserId = userId });
+            var requesterIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(requesterIdClaim, out var requesterId))
+            {
+                logger.LogWarning("Soft delete denied due to invalid requester id claim. Claim value: {ClaimValue}", requesterIdClaim);
+                return Unauthorized("Invalid authentication context");
+            }
+
+            var result = await mediator.Send(new SoftDeleteUserCommand
+            {
+                UserId = userId,
+                RequesterId = requesterId
+            });
 
             return result.ToActionResult();
         }
@@ -44,6 +58,7 @@ namespace AuthService.Host.Controllers.v1
         [HttpPost("login")]
         [ProducesResponseType(typeof(AuthResponse), (int)HttpStatusCode.OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<AuthResponse>> Login(LoginUserCommand command)
         {
@@ -75,6 +90,19 @@ namespace AuthService.Host.Controllers.v1
                 Email = email,
                 Roles = roles
             });
+        }
+
+        [Authorize]
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<AuthResponse>> UpdateUser(UpdateUserCommand command)
+        {
+            logger.LogInformation("Received RefreshTokenCommand for userId: {UserId}", command.Id);
+            var result = await mediator.Send(command);
+            return result.ToActionResult();
         }
     }
 }

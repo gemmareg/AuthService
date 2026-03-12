@@ -8,7 +8,7 @@ namespace AuthService.Application.Features.Users.Commands.SoftDeleteUser
     {
         public async Task<Result> Handle(SoftDeleteUserCommand request, CancellationToken cancellationToken)
         {
-            return await userService.SoftDeleteAsync(request.UserId);
+            return await userService.SoftDeleteAsync(request.UserId, request.RequesterId);
         }
     }
 }
