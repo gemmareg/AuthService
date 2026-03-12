@@ -54,12 +54,18 @@ namespace AuthService.Domain
             return Result<User>.Ok(user);
         }
 
-        public Result UpdateData(string? name, string? surname, string email)
+        public Result UpdateName(string? name, string? surname)
+        {
+            Name = name;
+            Surname = surname;
+
+            return Result.Ok();
+        }
+
+        public Result UpdateEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
                 return Result.Fail("Email is required");
-            Name = name;
-            Surname = surname;
             Email = email;
             return Result.Ok();
         }

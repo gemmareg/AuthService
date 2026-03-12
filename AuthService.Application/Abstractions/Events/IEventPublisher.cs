@@ -6,5 +6,7 @@ namespace AuthService.Application.Abstractions.Events
     {
         void PublishUserRegistered(UserRegisteredEvent evt);
         void PublishUserSoftDeleted(UserSoftDeletedEvent evt);
+        void PublishUserActivated(UserActivatedEvent evt);
+        void PublishEmailChanged(EmailChangedEvent evt);
     }
 }

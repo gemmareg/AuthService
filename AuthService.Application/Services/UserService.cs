@@ -82,7 +82,6 @@ namespace AuthService.Application.Services
             );
         }
 
-
         public async Task<Result> SoftDeleteAsync(Guid userId, Guid requesterId)
         {
             var user = await userRepository.GetByIdAsync(userId);
@@ -146,6 +145,8 @@ namespace AuthService.Application.Services
 
                 user.Activate();
                 await unitOfWork.SaveChangesAsync();
+
+                PublishActivatedEvent(user);
             }
 
             var accessToken = tokenService.GenerateAccessToken(
@@ -174,6 +175,33 @@ namespace AuthService.Application.Services
             });
         }
 
+        public async Task<Result> UpdateAsync(Guid userId, string name, string surname, string email)
+        {
+            var user = await userRepository.GetByIdAsync(userId);
+            if (user is null)
+            {
+                logger.LogWarning("Update attempted for non-existent user ID: {UserId}", userId);
+                return Result.Fail("User not found");
+            }
+            if (user.Email != email)
+            {
+                var existingUserWithEmail = await userRepository.GetByEmailAsync(email);
+                if (existingUserWithEmail is not null && existingUserWithEmail.Id != userId)
+                {
+                    logger.LogWarning("Update failed due to email conflict. User ID: {UserId}, Email: {Email}", userId, email);
+                    return Result.Fail("Email already in use by another account");
+                }
+                user.UpdateEmail(email);
+                PublishEmailUpdatedEvent(user);
+            }
+
+            user.UpdateName(name, surname);
+            await userRepository.UpdateAsync(user);
+            await unitOfWork.SaveChangesAsync();
+            logger.LogInformation("User updated successfully with ID: {UserId}", userId);
+            return Result.Ok();
+        }
+
         private async Task<string> GenerateUsername(string name, string surname)
         {
             var username = (name + surname).ToLower().Replace(" ", "");
@@ -188,7 +216,8 @@ namespace AuthService.Application.Services
 
             int nextNumber = 1;
             nextNumber = validUsernames
-                    .Select(u => {
+                    .Select(u =>
+                    {
                         var numberPart = u.Substring(username.Length);
                         return int.TryParse(numberPart, out var n) ? n : 0;
                     })
@@ -199,24 +228,28 @@ namespace AuthService.Application.Services
 
         private void PublishRegisteredEvent(User user)
         {
-            var evt = new UserRegisteredEvent
-            {
-                UserId = user.Id.ToString(),
-                Name = user.Name,
-            };
+            var evt = new UserRegisteredEvent(user.Id.ToString(), user.Name);
 
             publisher.PublishUserRegistered(evt);
         }
 
         private void PublishSoftDeletedEvent(User user)
         {
-            var evt = new UserSoftDeletedEvent
-            {
-                UserId = user.Id.ToString(),
-                Email = user.Email
-            };
+            UserSoftDeletedEvent evt = new(user.Id.ToString());
 
             publisher.PublishUserSoftDeleted(evt);
+        }
+
+        private void PublishActivatedEvent(User user)
+        {
+            UserActivatedEvent evt = new(user.Id.ToString());
+            publisher.PublishUserActivated(evt);
+        }
+
+        private void PublishEmailUpdatedEvent(User user)
+        {
+            EmailChangedEvent evt = new(user.Id.ToString(), user.Email);
+            publisher.PublishEmailChanged(evt);
         }
     }
 }

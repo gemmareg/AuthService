@@ -45,4 +45,28 @@ public class EventPublisher : IEventPublisher
             body: body
         );
     }
+
+    public void PublishUserActivated(UserActivatedEvent evt)
+    {
+        var json = JsonSerializer.Serialize(evt);
+        var body = Encoding.UTF8.GetBytes(json);
+        _channel.BasicPublish(
+            exchange: "auth.events",
+            routingKey: "user.activated",
+            basicProperties: null,
+            body: body
+        );
+    }
+
+    public void PublishEmailChanged(EmailChangedEvent evt)
+    {
+        var json = JsonSerializer.Serialize(evt);
+        var body = Encoding.UTF8.GetBytes(json);
+        _channel.BasicPublish(
+            exchange: "auth.events",
+            routingKey: "user.email-changed",
+            basicProperties: null,
+            body: body
+        );
+    }
 }
