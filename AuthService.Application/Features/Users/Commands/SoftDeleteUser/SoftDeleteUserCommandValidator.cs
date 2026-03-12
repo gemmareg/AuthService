@@ -8,6 +8,8 @@ namespace AuthService.Application.Features.Users.Commands.SoftDeleteUser
         {
             RuleFor(x => x.UserId)
                 .NotEmpty().WithMessage("UserId is required");
+            RuleFor(x => x.RequesterId)
+                .NotEmpty().WithMessage("RequesterId is required");
         }
     }
 }

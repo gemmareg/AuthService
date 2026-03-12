@@ -20,6 +20,12 @@ namespace AuthService.Infrastructure.Persistance.Repositories
                 .Include(u => u.Roles)
                 .FirstOrDefaultAsync(u => u.Email == email);
 
+
+        public Task<User?> GetByIdWithRolesAsync(Guid id)
+            => _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == id);
+
         public Task<List<User>> GetByUsernameAsync(string username)
             => _context.Users.Where(u => u.Username.StartsWith(username)).ToListAsync();
     }

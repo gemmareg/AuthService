@@ -7,6 +7,7 @@ using Auth.Contracts.Events;
 using AuthService.Domain;
 using AuthService.Domain.ValueObjects;
 using AuthService.Shared.Result.Generic;
+using AuthService.Shared.Constants;
 using AuthService.Shared.Result.NonGeneric;
 using Microsoft.Extensions.Logging;
 
@@ -82,7 +83,7 @@ namespace AuthService.Application.Services
         }
 
 
-        public async Task<Result> SoftDeleteAsync(Guid userId)
+        public async Task<Result> SoftDeleteAsync(Guid userId, Guid requesterId)
         {
             var user = await userRepository.GetByIdAsync(userId);
 
@@ -92,12 +93,28 @@ namespace AuthService.Application.Services
                 return Result.Fail("User not found");
             }
 
+            var requester = await userRepository.GetByIdWithRolesAsync(requesterId);
+            if (requester is null)
+            {
+                logger.LogWarning("Soft delete denied because requester was not found. RequesterId: {RequesterId}", requesterId);
+                return Result.Fail("Invalid requester");
+            }
+
+            var requesterIsAdmin = requester.Roles.Any(r => string.Equals(r.Name, "Admin", StringComparison.OrdinalIgnoreCase));
+            if (!requesterIsAdmin && requesterId != userId)
+            {
+                logger.LogWarning("Soft delete forbidden. Requester {RequesterId} tried to deactivate user {UserId}", requesterId, userId);
+                return Result.Fail(UserErrorMessages.SoftDeleteForbidden);
+            }
+
             var softDeleteResult = user.SoftDelete();
             if (!softDeleteResult.Success)
             {
                 logger.LogWarning("Soft delete failed for user ID: {UserId}. Reason: {Reason}", userId, softDeleteResult.Message);
                 return Result.Fail(softDeleteResult.Message);
             }
+
+            user.SetUpdated(requesterIsAdmin ? $"Admin:{requesterId}" : $"Self:{requesterId}");
 
             await userRepository.UpdateAsync(user);
             await unitOfWork.SaveChangesAsync();
@@ -119,8 +136,17 @@ namespace AuthService.Application.Services
                 return Result<AuthResponse>.Fail("Invalid email or password");
             }
 
-            user.Activate();
-            await unitOfWork.SaveChangesAsync();
+            if (!user.IsActive)
+            {
+                if (user.UpdatedBy?.StartsWith("Admin:", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    logger.LogWarning("Login forbidden for admin-deactivated account with email: {Email}", email);
+                    return Result<AuthResponse>.Fail(UserErrorMessages.AccountDeactivatedByAdmin);
+                }
+
+                user.Activate();
+                await unitOfWork.SaveChangesAsync();
+            }
 
             var accessToken = tokenService.GenerateAccessToken(
                 user.Id,

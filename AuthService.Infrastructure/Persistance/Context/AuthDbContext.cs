@@ -28,7 +28,10 @@ namespace AuthService.Infrastructure.Persistance.Context
                     case EntityState.Modified:
                         entry.Property(x => x.CreatedAt).IsModified = false;
                         entry.Property(x => x.CreatedBy).IsModified = false;
-                        entry.Entity.SetUpdated(EF_SYSTEM_USER);
+                        var updatedBy = string.IsNullOrWhiteSpace(entry.Entity.UpdatedBy)
+                            ? EF_SYSTEM_USER
+                            : entry.Entity.UpdatedBy;
+                        entry.Entity.SetUpdated(updatedBy!);
                         break;
                 }
             }
