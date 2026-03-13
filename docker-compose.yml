@@ -11,6 +11,7 @@ services:
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
       JwtSettings__SecretKey: ${JWT_SECRET}
+      AdminSeed__UserId: ${ADMIN_SEED_USER_ID}
       AdminSeed__Username: ${ADMIN_SEED_USERNAME}
       AdminSeed__Email: ${ADMIN_SEED_EMAIL}
       AdminSeed__Password: ${ADMIN_SEED_PASSWORD}
@@ -44,6 +45,7 @@ services:
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
       JwtSettings__SecretKey: ${JWT_SECRET}
+      AdminSeed__UserId: ${ADMIN_SEED_USER_ID}
       AdminSeed__Username: ${ADMIN_SEED_USERNAME}
       AdminSeed__Email: ${ADMIN_SEED_EMAIL}
       AdminSeed__Password: ${ADMIN_SEED_PASSWORD}

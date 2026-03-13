@@ -44,3 +44,5 @@ docker compose logs -f authservice
   - ejecuta siempre `database update`.
 - La API también aplica migraciones al arrancar como red de seguridad.
 - `JwtSettings` y demás configuración se sobreescriben vía variables de entorno (`__` en claves anidadas).
+- Define `ADMIN_SEED_USER_ID` para garantizar que el administrador tenga el mismo `UserId` en todos los sistemas.
+- Cuando el admin se crea por seeding, se publica el evento `admin.created` en el exchange `auth.events`.

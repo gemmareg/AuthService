@@ -12,7 +12,6 @@ public class EventPublisher : IEventPublisher
     {
         _channel = channel;
 
-        // Declare exchange once
         _channel.ExchangeDeclare(
             exchange: "auth.events",
             type: ExchangeType.Topic,
@@ -65,6 +64,18 @@ public class EventPublisher : IEventPublisher
         _channel.BasicPublish(
             exchange: "auth.events",
             routingKey: "user.email-changed",
+            basicProperties: null,
+            body: body
+        );
+    }
+
+    public void PublishAdminCreated(AdminCreatedEvent evt)
+    {
+        var json = JsonSerializer.Serialize(evt);
+        var body = Encoding.UTF8.GetBytes(json);
+        _channel.BasicPublish(
+            exchange: "auth.events",
+            routingKey: "admin.created",
             basicProperties: null,
             body: body
         );
