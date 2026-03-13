@@ -1,5 +1,6 @@
 ﻿using AuthService.Application.Abstractions.Repositories;
 using AuthService.Application.Abstractions.UnitOfWork;
+using AuthService.Infrastructure.Extensions.Options;
 using AuthService.Infrastructure.Persistance.Context;
 using AuthService.Infrastructure.Persistance.Context.Seeder;
 using AuthService.Infrastructure.Persistance.Repositories;
@@ -14,6 +15,8 @@ namespace AuthService.Infrastructure.Extensions
     {
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
+            services.Configure<AdminSeedSettings>(configuration.GetSection("AdminSeed"));
+
             services.AddDbContext<AuthDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("SqlServer"))
             );
@@ -32,6 +35,9 @@ namespace AuthService.Infrastructure.Extensions
         public static async Task CreateDBSeed(this IServiceProvider services)
         {
             using var scope = services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+            await dbContext.Database.MigrateAsync();
+
             var seeder = scope.ServiceProvider.GetRequiredService<AuthDbSeeder>();
             await seeder.SeedAsync();
         }
