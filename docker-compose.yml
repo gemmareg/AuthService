@@ -1,33 +1,61 @@
 services:
+  migrator:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    container_name: authservice-migrator
+    working_dir: /src
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__SqlServer: Server=sqlserver,1433;Database=AuthService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      JwtSettings__SecretKey: ${JWT_SECRET}
+      AdminSeed__Username: ${ADMIN_SEED_USERNAME}
+      AdminSeed__Email: ${ADMIN_SEED_EMAIL}
+      AdminSeed__Password: ${ADMIN_SEED_PASSWORD}
+      AdminSeed__Name: ${ADMIN_SEED_NAME}
+      AdminSeed__Surname: ${ADMIN_SEED_SURNAME}
+    volumes:
+      - ./:/src
+    entrypoint: ["/bin/bash", "-c"]
+    command: "dotnet tool install --global dotnet-ef --version 8.* && export PATH=$$PATH:/root/.dotnet/tools && ./scripts/ef-bootstrap.sh"
+    restart: "no"
+
   authservice:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: authservice-api
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     ports:
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__SqlServer: Server=sqlserver,1433;Database=AuthServiceDb;User Id=sa;Password=Your_strong_Password123;TrustServerCertificate=True;
+      ConnectionStrings__SqlServer: Server=sqlserver,1433;Database=AuthService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
       RabbitMQ__Host: rabbitmq
       RabbitMQ__Port: 5672
-      RabbitMQ__User: guest
-      RabbitMQ__Password: guest
-      JwtSettings__Issuer: AuthService
-      JwtSettings__Audience: AuthServiceClients
-      JwtSettings__SecretKey: SuperSecretKeyForJwt1234567890
+      RabbitMQ__User: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      JwtSettings__SecretKey: ${JWT_SECRET}
+      AdminSeed__Username: ${ADMIN_SEED_USERNAME}
+      AdminSeed__Email: ${ADMIN_SEED_EMAIL}
+      AdminSeed__Password: ${ADMIN_SEED_PASSWORD}
+      AdminSeed__Name: ${ADMIN_SEED_NAME}
+      AdminSeed__Surname: ${ADMIN_SEED_SURNAME}
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: authservice-sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "Your_strong_Password123"
+      SA_PASSWORD: "${SA_PASSWORD}"
     ports:
       - "1433:1433"
     healthcheck:
@@ -42,6 +70,9 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: authservice-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
       - "5672:5672"
       - "15672:15672"
