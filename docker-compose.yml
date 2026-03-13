@@ -1,0 +1,88 @@
+services:
+  migrator:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    container_name: authservice-migrator
+    working_dir: /src
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__SqlServer: Server=sqlserver,1433;Database=AuthService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      JwtSettings__SecretKey: ${JWT_SECRET}
+      AdminSeed__UserId: ${ADMIN_SEED_USER_ID}
+      AdminSeed__Username: ${ADMIN_SEED_USERNAME}
+      AdminSeed__Email: ${ADMIN_SEED_EMAIL}
+      AdminSeed__Password: ${ADMIN_SEED_PASSWORD}
+      AdminSeed__Name: ${ADMIN_SEED_NAME}
+      AdminSeed__Surname: ${ADMIN_SEED_SURNAME}
+    volumes:
+      - ./:/src
+    entrypoint: ["/bin/bash", "-c"]
+    command: "dotnet tool install --global dotnet-ef --version 8.* && export PATH=$$PATH:/root/.dotnet/tools && ./scripts/ef-bootstrap.sh"
+    restart: "no"
+
+  authservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: authservice-api
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__SqlServer: Server=sqlserver,1433;Database=AuthService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__User: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      JwtSettings__SecretKey: ${JWT_SECRET}
+      AdminSeed__UserId: ${ADMIN_SEED_USER_ID}
+      AdminSeed__Username: ${ADMIN_SEED_USERNAME}
+      AdminSeed__Email: ${ADMIN_SEED_EMAIL}
+      AdminSeed__Password: ${ADMIN_SEED_PASSWORD}
+      AdminSeed__Name: ${ADMIN_SEED_NAME}
+      AdminSeed__Surname: ${ADMIN_SEED_SURNAME}
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: authservice-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "${SA_PASSWORD}"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${SA_PASSWORD}\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: authservice-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  sqlserver-data:

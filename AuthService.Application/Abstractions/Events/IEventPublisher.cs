@@ -8,5 +8,6 @@ namespace AuthService.Application.Abstractions.Events
         void PublishUserSoftDeleted(UserSoftDeletedEvent evt);
         void PublishUserActivated(UserActivatedEvent evt);
         void PublishEmailChanged(EmailChangedEvent evt);
+        void PublishAdminCreated(AdminCreatedEvent evt);
     }
 }
