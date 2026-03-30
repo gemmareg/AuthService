@@ -36,7 +36,7 @@ namespace AuthService.Domain
             Surname = surname;
         }
 
-        public static Result<User> Create(string username, string email, string passwordHash, string name, string surname)
+        public static Result<User> Create(string username, string email, string passwordHash, string name, string surname, Guid? userId = null)
         {
             if (string.IsNullOrWhiteSpace(username))
                 return Result<User>.Fail(ErrorMessages.USERNAME_NOT_NULL);
@@ -49,7 +49,7 @@ namespace AuthService.Domain
             if (string.IsNullOrWhiteSpace(surname))
                 return Result<User>.Fail("Surname is required");
 
-            var user = new User(Guid.NewGuid(), username, email, passwordHash, name, surname);
+            var user = new User(userId ?? Guid.NewGuid(), username, email, passwordHash, name, surname);
 
             return Result<User>.Ok(user);
         }
