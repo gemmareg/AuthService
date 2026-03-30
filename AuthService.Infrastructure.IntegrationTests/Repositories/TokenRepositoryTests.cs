@@ -51,5 +51,28 @@ namespace AuthService.Infrastructure.IntegrationTests.Repositories
             Assert.Null(deletedToken);
 
         }
+
+        [Fact]
+        public async Task GetByTokenHashAsync_ShouldLoadUserRoles()
+        {
+            // Arrange
+            var user = User.Create("adminuser", "adminuser@test.com", "hashedpassword", "Admin", "User").Data!;
+            var adminRole = Role.Create("Admin").Data!;
+            user.AssignRole(adminRole);
+
+            var token = Token.Create(user.Id, TokenType.Refresh, "refresh-token-hash").Data!;
+
+            await _userRepository.AddAsync(user);
+            await _tokenRepository.AddAsync(token);
+            await _databaseFixture.DbContext.SaveChangesAsync();
+
+            // Act
+            var retrievedToken = await _tokenRepository.GetByTokenHashAsync("refresh-token-hash");
+
+            // Assert
+            Assert.NotNull(retrievedToken);
+            Assert.NotNull(retrievedToken!.User);
+            Assert.Contains(retrievedToken.User.Roles, role => role.Name == "Admin");
+        }
     }
 }
