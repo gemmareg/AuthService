@@ -10,16 +10,14 @@ namespace AuthService.Domain
         public string Description { get; private set; }
         public bool IsActive { get; private set; }
 
-        // Navigation: Roles that have this permission
+        // Navigation properties
         private readonly List<Role> _roles = new();
         private readonly List<User> _users = new();
         public IReadOnlyCollection<Role> Roles => _roles.AsReadOnly();
         public IReadOnlyCollection<User> Users => _users.AsReadOnly();
 
-        // Constructor privado para EF Core
         private Permission() { }
 
-        // Constructor público para creación controlada
         public Permission(string name, string description)
         {
             Name = name;
@@ -36,7 +34,6 @@ namespace AuthService.Domain
             return Result<Permission>.Ok(new Permission(name, description));
         }
 
-        // Comportamiento de dominio
         public void Deactivate()
         {
             IsActive = false;

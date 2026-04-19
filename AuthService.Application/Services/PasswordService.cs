@@ -25,7 +25,6 @@ namespace AuthService.Application.Services
 
             logger.LogDebug("Generated password hash using {Iterations} iterations", Iterations);
 
-            // Guardamos todo junto: iterations.salt.hash
             return $"{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
         }
 
