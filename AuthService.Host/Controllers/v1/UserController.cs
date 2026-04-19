@@ -3,7 +3,9 @@ using AuthService.Application.Features.Users.Commands.CreateUser;
 using AuthService.Application.Features.Users.Commands.LoginUser;
 using AuthService.Application.Features.Users.Commands.SoftDeleteUser;
 using AuthService.Application.Features.Users.Commands.UpdateUser;
+using AuthService.Application.Features.Users.Queries.GetUser;
 using AuthService.Host.Extensions;
+using AuthService.Host.Requests;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +41,7 @@ namespace AuthService.Host.Controllers.v1
         {
             logger.LogInformation("Received SoftDeleteUserCommand for userId: {UserId}", userId);
 
-            var requesterIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var requesterIdClaim = User.GetId();
             if (!Guid.TryParse(requesterIdClaim, out var requesterId))
             {
                 logger.LogWarning("Soft delete denied due to invalid requester id claim. Claim value: {ClaimValue}", requesterIdClaim);
@@ -75,20 +77,12 @@ namespace AuthService.Host.Controllers.v1
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public ActionResult GetAuthentication()
         {
-            var claims = User.Identities.First().Claims;
-            var userId = claims.FirstOrDefault(e => e.ToString().Contains("nameidentifier"))!.ToString().Split(" ")[1];
-            var email = claims.FirstOrDefault(e => e.ToString().Contains("emailaddress"))!.ToString().Split(" ")[1];
-            var roles = claims
-                .Where(e => e.ToString().Contains("role"))
-                .Select(e => e.ToString().Split(" ")[1])
-                .ToArray();
-
             return Ok(new
             {
                 Authenticated = User.Identity?.IsAuthenticated ?? false,
-                UserId = userId,
-                Email = email,
-                Roles = roles
+                UserId = User.GetId(),
+                Email = User.GetEmail(),
+                Roles = User.GetRoles()
             });
         }
 
@@ -98,10 +92,38 @@ namespace AuthService.Host.Controllers.v1
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<AuthResponse>> UpdateUser(UpdateUserCommand command)
+        public async Task<ActionResult<AuthResponse>> UpdateUser(UpdateUserRequest request)
         {
-            logger.LogInformation("Received RefreshTokenCommand for userId: {UserId}", command.Id);
+            logger.LogInformation("Received RefreshTokenCommand for userId: {UserId}", request.Id);
+            var command = new UpdateUserCommand
+            {
+                Id = request.Id,
+                Name = request.Name,
+                Surname = request.Surname,
+                Email = request.Email,
+                Password = request.Password,
+                RequesterId = User.GetId()
+            };  
             var result = await mediator.Send(command);
+            return result.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpGet("{userId:guid}")]
+        [ProducesResponseType(typeof(GetUserByIdQueryResponse), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<GetUserByIdQueryResponse>> GetUserById(string userId)
+        {
+            logger.LogInformation("Received GetUserByIdQuery for userId: {UserId}", userId);
+            var query = new GetUserByIdQuery()
+            {
+                Id = userId
+            };
+
+            var result = await mediator.Send(query);
+
             return result.ToActionResult();
         }
     }

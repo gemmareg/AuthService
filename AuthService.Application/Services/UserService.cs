@@ -175,7 +175,7 @@ namespace AuthService.Application.Services
             });
         }
 
-        public async Task<Result> UpdateAsync(Guid userId, string name, string surname, string email)
+        public async Task<Result> UpdateAsync(Guid userId, string name, string surname, string email, Guid requesterId)
         {
             var user = await userRepository.GetByIdAsync(userId);
             if (user is null)
@@ -183,6 +183,13 @@ namespace AuthService.Application.Services
                 logger.LogWarning("Update attempted for non-existent user ID: {UserId}", userId);
                 return Result.Fail("User not found");
             }
+
+            if (user.Id != requesterId && !user.IsAdmin())
+            {
+                logger.LogWarning("Update forbidden. Requester {RequesterId} tried to update user {UserId}", requesterId, userId);
+                return Result.Fail(UserErrorMessages.UpdateForbidden);
+            }
+
             if (user.Email != email)
             {
                 var existingUserWithEmail = await userRepository.GetByEmailAsync(email);
@@ -200,6 +207,29 @@ namespace AuthService.Application.Services
             await unitOfWork.SaveChangesAsync();
             logger.LogInformation("User updated successfully with ID: {UserId}", userId);
             return Result.Ok();
+        }
+
+        public async Task<Result<GetUserByIdQueryResponse>> GetUserByIdAsync(Guid userId)
+        {
+            var user = await userRepository.GetByIdAsync(userId);
+            if (user is null)
+            {
+                logger.LogWarning("Get user attempted for non-existent user ID: {UserId}", userId);
+                return Result<GetUserByIdQueryResponse>.Fail("User not found");
+            }
+
+            var userDto = new GetUserByIdQueryResponse
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Surname = user.Surname,
+                Email = user.Email,
+                IsActive = user.IsActive,
+                Roles = user.Roles.Select(r => r.Name).ToList()
+            };
+
+            logger.LogInformation("User retrieved successfully with ID: {UserId}", userId);
+            return Result<GetUserByIdQueryResponse>.Ok(userDto);
         }
 
         private async Task<string> GenerateUsername(string name, string surname)
@@ -251,5 +281,6 @@ namespace AuthService.Application.Services
             EmailChangedEvent evt = new(user.Id.ToString(), user.Email);
             publisher.PublishEmailChanged(evt);
         }
+
     }
 }

@@ -1,13 +1,14 @@
-﻿using AuthService.Shared.Result.NonGeneric;
+﻿using AuthService.Application.Abstractions.Services;
+using AuthService.Shared.Result.NonGeneric;
 using MediatR;
 
 namespace AuthService.Application.Features.Users.Commands.UpdateUser
 {
-    public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Result>
+    public class UpdateUserCommandHandler(IUserService userService) : IRequestHandler<UpdateUserCommand, Result>
     {
-        public Task<Result> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return await userService.UpdateAsync(new Guid(request.Id), request.Name, request.Surname, request.Email, new Guid(request.RequesterId));
         }
     }
 }

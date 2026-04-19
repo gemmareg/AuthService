@@ -132,5 +132,10 @@ namespace AuthService.Domain
 
             return Result.Ok();
         }
+
+        public bool IsAdmin()
+        {
+            return Roles.Any(r => r.Name == "Admin");
+        }
     }
 }
