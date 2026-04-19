@@ -27,7 +27,7 @@ namespace AuthService.Application.UnitTest.Services
 
             // Assert
             Assert.False(string.IsNullOrWhiteSpace(hash));
-            Assert.Contains(".", hash); // formato esperado: iterations.salt.hash }
+            Assert.Contains(".", hash); 
         }
 
         [Fact]
@@ -41,7 +41,7 @@ namespace AuthService.Application.UnitTest.Services
             var hash2 = _service.Hash(password);
 
             // Assert
-            Assert.NotEqual(hash1, hash2); // el salt debe hacerlos distintos }
+            Assert.NotEqual(hash1, hash2);
         }
 
         [Fact]

@@ -15,6 +15,9 @@ namespace AuthService.Infrastructure.Persistance.Repositories
         public async Task<Token?> GetByTokenHashAsync(string tokenHash)
             => await _context.Tokens
                 .Include(t => t.User)
+                    .ThenInclude(u => u.Roles)
+                .Include(t => t.User)
+                    .ThenInclude(u => u.Permissions)
                 .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
     }
 }
