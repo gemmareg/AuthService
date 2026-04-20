@@ -16,6 +16,7 @@ namespace AuthService.Infrastructure.Persistance.Repositories
             => await _context.Tokens
                 .Include(t => t.User)
                     .ThenInclude(u => u.Roles)
+                        .ThenInclude(r => r.Permissions)
                 .Include(t => t.User)
                     .ThenInclude(u => u.Permissions)
                 .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);

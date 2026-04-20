@@ -32,7 +32,7 @@ namespace AuthService.Application.Services
             _logger = logger;
         }
 
-        public string GenerateAccessToken(Guid userId, string email, IEnumerable<string> roles)
+        public string GenerateAccessToken(User user)
         {
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_settings.SecretKey));
@@ -43,12 +43,13 @@ namespace AuthService.Application.Services
 
             var claims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-                new(JwtRegisteredClaimNames.Email, email),
+                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new(JwtRegisteredClaimNames.Email, user.Email),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+            claims.AddRange(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Name)));
+            claims.AddRange(GetEffectivePermissions(user).Select(p => new Claim("permission", p)));
 
             var expiration = DateTime.UtcNow.Add(TokenPolicies.GetExpiration(TokenType.Access));
 
@@ -60,7 +61,7 @@ namespace AuthService.Application.Services
                 signingCredentials: credentials
             );
 
-            _logger.LogInformation("Generated access token for user {UserId} with email {Email}", userId, email);
+            _logger.LogInformation("Generated access token for user {UserId} with email {Email}", user.Id, user.Email);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
@@ -102,10 +103,7 @@ namespace AuthService.Application.Services
                 return Result<AuthResponse>.Fail("User account is inactive");
             }
 
-            var newAccessToken = GenerateAccessToken(
-            user.Id,
-            user.Email,
-            user.Roles.Select(r => r.Name));
+            var newAccessToken = GenerateAccessToken(user);
 
             var newRefreshToken = await GenerateRefreshToken(user.Id);
             token.Revoke();
@@ -129,6 +127,12 @@ namespace AuthService.Application.Services
             var hash = sha256.ComputeHash(bytes);
             return Convert.ToBase64String(hash);
         }
+
+        private static IEnumerable<string> GetEffectivePermissions(User user)
+            => user.Permissions
+                .Select(p => p.Name)
+                .Concat(user.Roles.SelectMany(r => r.Permissions.Select(p => p.Name)))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
 
     }
 }

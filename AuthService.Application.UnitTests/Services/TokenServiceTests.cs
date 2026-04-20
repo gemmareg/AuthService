@@ -40,12 +40,21 @@ namespace AuthService.Application.UnitTests.Services
         public void GenerateAccessToken_ShouldContainClaimsAndCorrectExpiration()
         {
             // Arrange
-            var userId = Guid.NewGuid();
             var email = "test@test.com";
-            var roles = new List<string> { "admin", "user" };
+            var user = User.Create("john", email, "hash", "John", "Doe", Guid.NewGuid()).Data!;
+            var adminRole = Role.Create("admin").Data!;
+            var userRole = Role.Create("user").Data!;
+            var readPermission = Permission.Create("users.read", "Read users").Data!;
+            var writePermission = Permission.Create("users.write", "Write users").Data!;
+
+            adminRole.AddPermission(readPermission);
+            userRole.AddPermission(writePermission);
+            user.AssignRole(adminRole);
+            user.AssignRole(userRole);
+            user.AddPermissions(readPermission); // duplicate on purpose
 
             // Act
-            var tokenString = _tokenService.GenerateAccessToken(userId, email, roles);
+            var tokenString = _tokenService.GenerateAccessToken(user);
 
             // Assert
             Assert.False(string.IsNullOrWhiteSpace(tokenString));
@@ -53,12 +62,17 @@ namespace AuthService.Application.UnitTests.Services
             var handler = new JwtSecurityTokenHandler();
             var jwt = handler.ReadJwtToken(tokenString);
 
-            Assert.Equal(userId.ToString(), jwt.Subject);
+            Assert.Equal(user.Id.ToString(), jwt.Subject);
             Assert.Equal(email, jwt.Claims.First(c => c.Type == JwtRegisteredClaimNames.Email).Value);
-            foreach (var role in roles)
+            foreach (var role in user.Roles.Select(r => r.Name))
             {
                 Assert.Contains(jwt.Claims, c => c.Type == ClaimTypes.Role && c.Value == role);
             }
+            foreach (var permission in new[] { "users.read", "users.write" })
+            {
+                Assert.Contains(jwt.Claims, c => c.Type == "permission" && c.Value == permission);
+            }
+            Assert.Equal(2, jwt.Claims.Count(c => c.Type == "permission"));
 
             var expectedExpiration = DateTime.UtcNow.Add(TokenPolicies.GetExpiration(TokenType.Access));
             var difference = (jwt.ValidTo - expectedExpiration).TotalSeconds;

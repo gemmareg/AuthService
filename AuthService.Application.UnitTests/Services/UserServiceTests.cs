@@ -159,7 +159,7 @@ namespace AuthService.Application.UnitTest.Services
 
             _userRepositoryMock.Setup(p => p.GetByEmailWithRolesAsync(It.IsAny<string>())).ReturnsAsync(user);
             _passwordServiceMock.Setup(p => p.Verify(PASSWORD, PASSWORD_HASHED)).Returns(true);
-            _tokenServiceMock.Setup(p => p.GenerateAccessToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>())).Returns("valid-access-token");
+            _tokenServiceMock.Setup(p => p.GenerateAccessToken(It.IsAny<User>())).Returns("valid-access-token");
             _tokenServiceMock.Setup(p => p.GenerateRefreshToken(It.IsAny<Guid>())).ReturnsAsync(Result<RefreshToken>.Ok(refreshToken));
 
             // Act
