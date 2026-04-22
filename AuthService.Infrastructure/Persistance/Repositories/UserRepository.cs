@@ -18,12 +18,16 @@ namespace AuthService.Infrastructure.Persistance.Repositories
         public Task<User?> GetByEmailWithRolesAsync(string email)
             => _context.Users
                 .Include(u => u.Roles)
+                    .ThenInclude(r => r.Permissions)
+                .Include(u => u.Permissions)
                 .FirstOrDefaultAsync(u => u.Email == email);
 
 
         public Task<User?> GetByIdWithRolesAsync(Guid id)
             => _context.Users
                 .Include(u => u.Roles)
+                    .ThenInclude(r => r.Permissions)
+                .Include(u => u.Permissions)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
         public Task<List<User>> GetByUsernameAsync(string username)

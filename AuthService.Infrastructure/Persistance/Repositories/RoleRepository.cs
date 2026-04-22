@@ -12,6 +12,9 @@ namespace AuthService.Infrastructure.Persistance.Repositories
         {
         }
 
-        public async Task<Role?> GetByNameAsync(string name) => await _context.Roles.FirstOrDefaultAsync(r => r.Name == name);
+        public async Task<Role?> GetByNameAsync(string name)
+            => await _context.Roles
+                .Include(r => r.Permissions)
+                .FirstOrDefaultAsync(r => r.Name == name);
     }
 }
