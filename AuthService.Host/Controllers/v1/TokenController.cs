@@ -1,6 +1,5 @@
 ﻿using AuthService.Application.Dtos;
 using AuthService.Application.Features.Tokens.Queries.RefreshToken;
-using AuthService.Application.Features.Users.Commands.CreateUser;
 using AuthService.Host.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

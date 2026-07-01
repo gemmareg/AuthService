@@ -1,5 +1,7 @@
-﻿using AuthService.Application.Abstractions.Events;
+﻿using Auth.Contracts.Filters;
+using AuthService.Application.Abstractions.Events;
 using AuthService.Application.Extensions.Options;
+using AuthService.Contracts.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -38,6 +40,11 @@ namespace AuthService.Host.Extensions
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
                     };
                 });
+
+            services.AddControllers(options =>
+            {
+                options.Filters.Add<PermissionFilter>();
+            });
 
             return services;
         }

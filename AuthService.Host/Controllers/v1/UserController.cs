@@ -3,6 +3,7 @@ using AuthService.Application.Features.Users.Commands.CreateUser;
 using AuthService.Application.Features.Users.Commands.LoginUser;
 using AuthService.Application.Features.Users.Commands.SoftDeleteUser;
 using AuthService.Application.Features.Users.Commands.UpdateUser;
+using AuthService.Contracts.Extensions;
 using AuthService.Host.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +40,7 @@ namespace AuthService.Host.Controllers.v1
         {
             logger.LogInformation("Received SoftDeleteUserCommand for userId: {UserId}", userId);
 
-            var requesterIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var requesterIdClaim = User.GetId();
             if (!Guid.TryParse(requesterIdClaim, out var requesterId))
             {
                 logger.LogWarning("Soft delete denied due to invalid requester id claim. Claim value: {ClaimValue}", requesterIdClaim);
@@ -75,13 +76,9 @@ namespace AuthService.Host.Controllers.v1
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public ActionResult GetAuthentication()
         {
-            var claims = User.Identities.First().Claims;
-            var userId = claims.FirstOrDefault(e => e.ToString().Contains("nameidentifier"))!.ToString().Split(" ")[1];
-            var email = claims.FirstOrDefault(e => e.ToString().Contains("emailaddress"))!.ToString().Split(" ")[1];
-            var roles = claims
-                .Where(e => e.ToString().Contains("role"))
-                .Select(e => e.ToString().Split(" ")[1])
-                .ToArray();
+            var userId = User.GetId();
+            var email = User.GetEmail();
+            var roles = User.GetRoles();
 
             return Ok(new
             {
