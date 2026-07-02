@@ -3,8 +3,10 @@ using AuthService.Application.Abstractions.Repositories;
 using AuthService.Application.Abstractions.Services;
 using AuthService.Application.Abstractions.UnitOfWork;
 using AuthService.Application.Dtos;
+using Auth.Contracts;
 using Auth.Contracts.Events;
 using AuthService.Domain;
+using AuthService.Domain.Extensions;
 using AuthService.Domain.ValueObjects;
 using AuthService.Shared.Result.Generic;
 using AuthService.Shared.Constants;
@@ -89,18 +91,27 @@ namespace AuthService.Application.Services
                 return Result.Fail("User not found");
             }
 
-            var requester = await userRepository.GetByIdWithRolesAsync(requesterId);
-            if (requester is null)
-            {
-                logger.LogWarning("Soft delete denied because requester was not found. RequesterId: {RequesterId}", requesterId);
-                return Result.Fail("Invalid requester");
-            }
+            var isSelf = requesterId == userId;
 
-            var requesterIsAdmin = requester.Roles.Any(r => string.Equals(r.Name, "Admin", StringComparison.OrdinalIgnoreCase));
-            if (!requesterIsAdmin && requesterId != userId)
+            // La autorización "rápida" (self u ostenta el permiso, según el token)
+            // ya se comprueba en el controller. Aquí repetimos la comprobación
+            // contra el estado actual en BD como red de seguridad (defensa en
+            // profundidad) y solo si hace falta, es decir, únicamente cuando no
+            // es el propio usuario quien se está desactivando.
+            if (!isSelf)
             {
-                logger.LogWarning("Soft delete forbidden. Requester {RequesterId} tried to deactivate user {UserId}", requesterId, userId);
-                return Result.Fail(UserErrorMessages.SoftDeleteForbidden);
+                var requester = await userRepository.GetByIdWithRolesAsync(requesterId);
+                if (requester is null)
+                {
+                    logger.LogWarning("Soft delete denied because requester was not found. RequesterId: {RequesterId}", requesterId);
+                    return Result.Fail("Invalid requester");
+                }
+
+                if (!requester.HasEffectivePermission(AuthPermissions.UsersDeleteAny))
+                {
+                    logger.LogWarning("Soft delete forbidden. Requester {RequesterId} lacks {Permission} to deactivate user {UserId}", requesterId, AuthPermissions.UsersDeleteAny, userId);
+                    return Result.Fail(UserErrorMessages.SoftDeleteForbidden);
+                }
             }
 
             var softDeleteResult = user.SoftDelete();
@@ -110,7 +121,7 @@ namespace AuthService.Application.Services
                 return Result.Fail(softDeleteResult.Message);
             }
 
-            user.SetUpdated(requesterIsAdmin && requesterId != userId ? $"Admin:{requesterId}" : $"Self:{requesterId}");
+            user.SetUpdated(isSelf ? $"Self:{requesterId}" : $"ByOther:{requesterId}");
 
             await userRepository.UpdateAsync(user);
             await unitOfWork.SaveChangesAsync();
@@ -134,9 +145,9 @@ namespace AuthService.Application.Services
 
             if (!user.IsActive)
             {
-                if (user.UpdatedBy?.StartsWith("Admin:", StringComparison.OrdinalIgnoreCase) == true)
+                if (user.UpdatedBy?.StartsWith("ByOther:", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    logger.LogWarning("Login forbidden for admin-deactivated account with email: {Email}", email);
+                    logger.LogWarning("Login forbidden for account deactivated by another user with email: {Email}", email);
                     return Result<AuthResponse>.Fail(UserErrorMessages.AccountDeactivatedByAdmin);
                 }
 

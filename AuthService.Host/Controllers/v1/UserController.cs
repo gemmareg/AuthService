@@ -1,15 +1,15 @@
-﻿using AuthService.Application.Dtos;
+﻿using Auth.Contracts;
+using Auth.Contracts.Extensions;
+using AuthService.Application.Dtos;
 using AuthService.Application.Features.Users.Commands.CreateUser;
 using AuthService.Application.Features.Users.Commands.LoginUser;
 using AuthService.Application.Features.Users.Commands.SoftDeleteUser;
 using AuthService.Application.Features.Users.Commands.UpdateUser;
-using AuthService.Contracts.Extensions;
 using AuthService.Host.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using System.Security.Claims;
 
 namespace AuthService.Host.Controllers.v1
 {
@@ -38,14 +38,24 @@ namespace AuthService.Host.Controllers.v1
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> SoftDelete(Guid userId)
         {
-            logger.LogInformation("Received SoftDeleteUserCommand for userId: {UserId}", userId);
-
             var requesterIdClaim = User.GetId();
             if (!Guid.TryParse(requesterIdClaim, out var requesterId))
             {
                 logger.LogWarning("Soft delete denied due to invalid requester id claim. Claim value: {ClaimValue}", requesterIdClaim);
                 return Unauthorized("Invalid authentication context");
             }
+
+            // Cualquier usuario puede desactivar su propia cuenta. Desactivar la
+            // cuenta de otro requiere el permiso "users:delete:any" (comprobado
+            // aquí contra el token para responder rápido; UserService repite la
+            // comprobación contra el estado actual en BD como red de seguridad).
+            if (requesterId != userId && !User.HasPermission(AuthPermissions.UsersDeleteAny))
+            {
+                logger.LogWarning("Soft delete forbidden. Requester {RequesterId} lacks {Permission} to deactivate user {UserId}", requesterId, AuthPermissions.UsersDeleteAny, userId);
+                return Forbid();
+            }
+
+            logger.LogInformation("Received SoftDeleteUserCommand for userId: {UserId}", userId);
 
             var result = await mediator.Send(new SoftDeleteUserCommand
             {
@@ -95,10 +105,36 @@ namespace AuthService.Host.Controllers.v1
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<AuthResponse>> UpdateUser(UpdateUserCommand command)
+        public async Task<ActionResult> UpdateUser(UpdateUserRequest request)
         {
-            logger.LogInformation("Received RefreshTokenCommand for userId: {UserId}", command.Id);
-            var result = await mediator.Send(command);
+            var requesterIdClaim = User.GetId();
+            if (!Guid.TryParse(requesterIdClaim, out var requesterId))
+            {
+                logger.LogWarning("Update denied due to invalid requester id claim. Claim value: {ClaimValue}", requesterIdClaim);
+                return Unauthorized("Invalid authentication context");
+            }
+
+            // Por defecto se actualiza el propio usuario. Solo se permite
+            // apuntar a otro TargetUserId si el llamante tiene permiso explícito;
+            // el Id nunca decide por sí solo a quién se edita (evita IDOR).
+            var targetUserId = request.TargetUserId ?? requesterId;
+            if (targetUserId != requesterId && !User.HasPermission(AuthPermissions.UsersUpdateAny))
+            {
+                logger.LogWarning("Update forbidden. Requester {RequesterId} lacks {Permission} to update user {TargetUserId}", requesterId, AuthPermissions.UsersUpdateAny, targetUserId);
+                return Forbid();
+            }
+
+            logger.LogInformation("Received UpdateUserCommand for userId: {UserId}", targetUserId);
+
+            var result = await mediator.Send(new UpdateUserCommand
+            {
+                RequesterId = requesterId,
+                TargetUserId = targetUserId,
+                Name = request.Name,
+                Surname = request.Surname,
+                Email = request.Email
+            });
+
             return result.ToActionResult();
         }
     }
