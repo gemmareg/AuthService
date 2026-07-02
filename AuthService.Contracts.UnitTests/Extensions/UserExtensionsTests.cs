@@ -1,6 +1,7 @@
 ﻿namespace Auth.Contracts.UnitTest.Extensions
 {
-    using AuthService.Contracts.Extensions;
+    using Auth.Contracts;
+    using Auth.Contracts.Extensions;
     using System.Security.Claims;
     using Xunit;
 
@@ -18,7 +19,7 @@
             if (permissions != null)
             {
                 claims.AddRange(
-                    permissions.Select(p => new Claim("permissions", p))
+                    permissions.Select(p => new Claim(AuthClaimTypes.Permission, p))
                 );
             }
 

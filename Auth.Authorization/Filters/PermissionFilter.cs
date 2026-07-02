@@ -1,5 +1,5 @@
 ﻿using Auth.Contracts.Attributes;
-using AuthService.Contracts.Extensions;
+using Auth.Contracts.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
