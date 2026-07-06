@@ -33,7 +33,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService.Infrastructure.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService.Application.UnitTest", "AuthService.Application.UnitTests\AuthService.Application.UnitTest.csproj", "{336E80A9-1212-473A-BB74-4953B6CE4B66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Auth.Contracts.UnitTest", "AuthService.Contracts.UnitTests\Auth.Contracts.UnitTest.csproj", "{5280ECA7-A2B6-47D5-98CC-1DABFEADB9E6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Auth.Contracts.UnitTest", "Auth.Contracts.UnitTests\Auth.Contracts.UnitTest.csproj", "{5280ECA7-A2B6-47D5-98CC-1DABFEADB9E6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{98C760A8-6B04-4BEF-8C8C-1595052B65E5}"
 EndProject

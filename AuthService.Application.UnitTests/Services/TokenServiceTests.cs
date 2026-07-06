@@ -11,7 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using static AuthService.Shared.Enums;
 
-namespace AuthService.Application.UnitTests.Services
+namespace AuthService.Application.UnitTest.Services
 {
     public class TokenServiceTests
     {
