@@ -1,6 +1,10 @@
+using AuthService.Application.Abstractions.Security;
 using AuthService.Application.Abstractions.Services;
+using AuthService.Application.Behaviors;
 using AuthService.Application.Extensions.Options;
+using AuthService.Application.Security;
 using AuthService.Application.Services;
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,13 +16,20 @@ namespace AuthService.Application.Extensions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+                cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            });
+
+            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
             services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
 
             services.AddScoped<ITokenGenerator, TokenService>();
             services.AddScoped<ITokenRefresher, TokenService>();
             services.AddScoped<IPasswordService, PasswordService>();
+            services.AddSingleton<ICommonPasswordChecker, CommonPasswordChecker>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IPermissionService, PermissionService>();
