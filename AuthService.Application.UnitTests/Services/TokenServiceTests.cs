@@ -1,4 +1,4 @@
-﻿using AuthService.Application.Abstractions.Repositories;
+using AuthService.Application.Abstractions.Repositories;
 using AuthService.Application.Abstractions.UnitOfWork;
 using AuthService.Application.Extensions.Options;
 using AuthService.Application.Services;
@@ -17,6 +17,7 @@ namespace AuthService.Application.UnitTest.Services
     {
         private readonly TokenService _tokenService;
         private readonly Mock<ITokenRepository> _tokenRepositoryMock;
+        private readonly Mock<IPermissionRepository> _permissionRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
         private readonly Mock<ILogger<TokenService>> _loggerMock = new();
 
@@ -30,31 +31,32 @@ namespace AuthService.Application.UnitTest.Services
         public TokenServiceTests()
         {
             _tokenRepositoryMock = new Mock<ITokenRepository>();
+            _permissionRepositoryMock = new Mock<IPermissionRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _loggerMock = new Mock<ILogger<TokenService>>();
             var options = Options.Create(JwtSettingsFixture);
-            _tokenService = new TokenService(_tokenRepositoryMock.Object, options, _unitOfWorkMock.Object, _loggerMock.Object);
+            _tokenService = new TokenService(_tokenRepositoryMock.Object, _permissionRepositoryMock.Object, options, _unitOfWorkMock.Object, _loggerMock.Object);
         }
 
         [Fact]
-        public void GenerateAccessToken_ShouldContainClaimsAndCorrectExpiration()
+        public async Task GenerateAccessTokenAsync_ShouldContainClaimsAndCorrectExpiration()
         {
             // Arrange
             var email = "test@test.com";
             var user = User.Create("john", email, "hash", "John", "Doe", Guid.NewGuid()).Data!;
-            var adminRole = Role.Create("admin").Data!;
-            var userRole = Role.Create("user").Data!;
+            var managerRole = Role.Create("manager").Data!;
+            var staffRole = Role.Create("staff").Data!;
             var readPermission = Permission.Create("users.read", "Read users").Data!;
             var writePermission = Permission.Create("users.write", "Write users").Data!;
 
-            adminRole.AddPermission(readPermission);
-            userRole.AddPermission(writePermission);
-            user.AssignRole(adminRole);
-            user.AssignRole(userRole);
+            managerRole.AddPermission(readPermission);
+            staffRole.AddPermission(writePermission);
+            user.AssignRole(managerRole);
+            user.AssignRole(staffRole);
             user.AddPermissions(readPermission); // duplicate on purpose
 
             // Act
-            var tokenString = _tokenService.GenerateAccessToken(user);
+            var tokenString = await _tokenService.GenerateAccessTokenAsync(user);
 
             // Assert
             Assert.False(string.IsNullOrWhiteSpace(tokenString));
@@ -77,6 +79,40 @@ namespace AuthService.Application.UnitTest.Services
             var expectedExpiration = DateTime.UtcNow.Add(TokenPolicies.GetExpiration(TokenType.Access));
             var difference = (jwt.ValidTo - expectedExpiration).TotalSeconds;
             Assert.True(Math.Abs(difference) < 5, "AccessToken expiration is not correct");
+
+            _permissionRepositoryMock.Verify(r => r.GetAllAsync(), Times.Never);
+        }
+
+        [Fact]
+        public async Task GenerateAccessTokenAsync_Should_Include_All_Active_Permissions_For_Admin_Regardless_Of_Assignment()
+        {
+            // Arrange: Admin user with no permissions directly or via role assigned in-memory.
+            var user = User.Create("admin-user", "admin@test.com", "hash", "Admin", "User", Guid.NewGuid()).Data!;
+            var adminRole = Role.Create("Admin").Data!;
+            user.AssignRole(adminRole);
+
+            var activeA = Permission.Create("roles:read", "Read roles").Data!;
+            var activeB = Permission.Create("permissions:read", "Read permissions").Data!;
+            var inactive = Permission.Create("roles:delete", "Delete roles").Data!;
+            inactive.Deactivate();
+
+            _permissionRepositoryMock
+                .Setup(r => r.GetAllAsync())
+                .ReturnsAsync(new List<Permission> { activeA, activeB, inactive });
+
+            // Act
+            var tokenString = await _tokenService.GenerateAccessTokenAsync(user);
+
+            // Assert
+            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(tokenString);
+            var permissionClaims = jwt.Claims.Where(c => c.Type == "permission").Select(c => c.Value).ToList();
+
+            Assert.Contains("roles:read", permissionClaims);
+            Assert.Contains("permissions:read", permissionClaims);
+            Assert.DoesNotContain("roles:delete", permissionClaims);
+            Assert.Equal(2, permissionClaims.Count);
+
+            _permissionRepositoryMock.Verify(r => r.GetAllAsync(), Times.Once);
         }
 
         [Fact]

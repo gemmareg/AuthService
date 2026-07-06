@@ -6,7 +6,7 @@ namespace AuthService.Application.Abstractions.Services
 {
     public interface ITokenGenerator
     {
-        string GenerateAccessToken(User user);
+        Task<string> GenerateAccessTokenAsync(User user);
         Task<Result<RefreshToken>> GenerateRefreshToken(Guid userId);
     }
 }
