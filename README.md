@@ -37,6 +37,14 @@ docker compose logs -f authservice
 - RabbitMQ UI: `http://localhost:15672`
 - SQL Server: `localhost,1433` (usuario `sa`)
 
+## Ejecutar sin Docker (desarrollo local)
+
+```bash
+cp AuthService.Host/appsettings.Development.json.example AuthService.Host/appsettings.Development.json
+```
+
+Rellena los valores marcados como `CHANGE_ME` (cadena de conexión, `JwtSettings:SecretKey`, credenciales de RabbitMQ, password del admin seed) antes de arrancar `AuthService.Host`. Este archivo está en `.gitignore`: nunca se commitea con valores reales.
+
 ## Notas
 
 - El migrator automatiza el bootstrap EF para bases nuevas:

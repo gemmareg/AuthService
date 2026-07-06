@@ -1,9 +1,11 @@
-﻿using AuthService.Application.Abstractions.Repositories;
+﻿using Auth.Contracts;
+using AuthService.Application.Abstractions.Repositories;
 using AuthService.Application.Abstractions.Services;
 using AuthService.Application.Abstractions.UnitOfWork;
 using AuthService.Application.Dtos;
 using AuthService.Application.Extensions.Options;
 using AuthService.Domain;
+using AuthService.Domain.Extensions;
 using AuthService.Domain.Policies;
 using AuthService.Shared.Result.Generic;
 using Microsoft.Extensions.Logging;
@@ -49,7 +51,7 @@ namespace AuthService.Application.Services
             };
 
             claims.AddRange(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Name)));
-            claims.AddRange(GetEffectivePermissions(user).Select(p => new Claim("permission", p)));
+            claims.AddRange(user.GetEffectivePermissions().Select(p => new Claim(AuthClaimTypes.Permission, p)));
 
             var expiration = DateTime.UtcNow.Add(TokenPolicies.GetExpiration(TokenType.Access));
 
@@ -127,12 +129,6 @@ namespace AuthService.Application.Services
             var hash = sha256.ComputeHash(bytes);
             return Convert.ToBase64String(hash);
         }
-
-        private static IEnumerable<string> GetEffectivePermissions(User user)
-            => user.Permissions
-                .Select(p => p.Name)
-                .Concat(user.Roles.SelectMany(r => r.Permissions.Select(p => p.Name)))
-                .Distinct(StringComparer.OrdinalIgnoreCase);
 
     }
 }

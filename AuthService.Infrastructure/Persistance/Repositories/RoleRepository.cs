@@ -16,5 +16,10 @@ namespace AuthService.Infrastructure.Persistance.Repositories
             => await _context.Roles
                 .Include(r => r.Permissions)
                 .FirstOrDefaultAsync(r => r.Name == name);
+
+        public async Task<Role?> GetByIdWithPermissionsAsync(Guid id)
+            => await _context.Roles
+                .Include(r => r.Permissions)
+                .FirstOrDefaultAsync(r => r.Id == id);
     }
 }

@@ -3,15 +3,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY AuthService.sln ./
 COPY AuthService.Host/AuthService.Host.csproj AuthService.Host/
 COPY AuthService.Application/AuthService.Application.csproj AuthService.Application/
 COPY AuthService.Domain/AuthService.Domain.csproj AuthService.Domain/
 COPY AuthService.Infrastructure/AuthService.Infrastructure.csproj AuthService.Infrastructure/
 COPY Auth.Contracts/Auth.Contracts.csproj Auth.Contracts/
+COPY Auth.Authorization/Auth.Authorization.csproj Auth.Authorization/
 COPY AuthService.Shared/AuthService.Shared.csproj AuthService.Shared/
 
-RUN dotnet restore AuthService.sln
+RUN dotnet restore AuthService.Host/AuthService.Host.csproj
 
 COPY . .
 RUN dotnet publish AuthService.Host/AuthService.Host.csproj -c Release -o /app/publish /p:UseAppHost=false

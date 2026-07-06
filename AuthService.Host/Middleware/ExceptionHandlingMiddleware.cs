@@ -23,12 +23,13 @@ namespace AuthService.Host.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unhandled exception");
+                _logger.LogError(ex, "Unhandled exception. TraceId: {TraceId}", context.TraceIdentifier);
                 var json = JsonSerializer.Serialize(new
                 {
-                    error = ex.Message,
-                    stackTrace = ex.StackTrace
+                    error = "An unexpected error occurred.",
+                    traceId = context.TraceIdentifier
                 });
+                context.Response.ContentType = "application/json";
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await context.Response.WriteAsync(json);
             }

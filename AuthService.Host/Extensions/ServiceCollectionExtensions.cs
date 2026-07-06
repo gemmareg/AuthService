@@ -1,5 +1,8 @@
-﻿using AuthService.Application.Abstractions.Events;
+﻿using Auth.Authorization.Extensions;
+using AuthService.Application.Abstractions.Events;
 using AuthService.Application.Extensions.Options;
+using AuthService.Host.Events;
+using Auth.Contracts.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -13,6 +16,7 @@ namespace AuthService.Host.Extensions
         public static IServiceCollection AddHostServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddJwtAuthentication(configuration);
+            services.AddAuthAuthorization();
             services.AddSwaggerDocumentation();
             services.AddRabbitMQ(configuration);
             services.AddSingleton<IEventPublisher, EventPublisher>();
@@ -38,6 +42,8 @@ namespace AuthService.Host.Extensions
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
                     };
                 });
+
+            services.AddAuthorization();
 
             return services;
         }

@@ -31,6 +31,14 @@ namespace AuthService.Domain
             return Result<Role>.Ok(role);
         }
 
+        public Result Rename(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return Result.Fail(ErrorMessages.ROLE_NAME_NOT_NULL);
+
+            Name = name;
+            return Result.Ok();
+        }
+
         public Result AddPermission(Permission permission)
         {
             if (permission == null) return Result.Fail(ErrorMessages.PERMISSION_NOT_NULL);
@@ -38,6 +46,16 @@ namespace AuthService.Domain
                 return Result.Fail(ErrorMessages.PERMISSION_ALREADY_ASSIGNED);
 
             _permissions.Add(permission);
+            return Result.Ok();
+        }
+
+        public Result RemovePermission(Permission permission)
+        {
+            if (permission == null) return Result.Fail(ErrorMessages.PERMISSION_NOT_NULL);
+            if (!_permissions.Any(p => p.Id == permission.Id))
+                return Result.Fail(ErrorMessages.PERMISSION_NOT_ASSIGNED);
+
+            _permissions.Remove(permission);
             return Result.Ok();
         }
     }
