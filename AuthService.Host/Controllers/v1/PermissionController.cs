@@ -16,11 +16,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace AuthService.Host.Controllers.v1
 {
     [Authorize]
-    [RequiresPermission(AuthPermissions.PermissionsManage)]
     [ApiController]
     [Route("api/[controller]")]
     public class PermissionController(IMediator mediator, ILogger<PermissionController> logger) : ControllerBase
     {
+        [RequiresPermission(AuthPermissions.PermissionsCreate)]
         [HttpPost]
         [ProducesResponseType(typeof(PermissionResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -34,6 +34,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.PermissionsRead)]
         [HttpGet("{permissionId:guid}")]
         [ProducesResponseType(typeof(PermissionResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -45,6 +46,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.PermissionsRead)]
         [HttpGet]
         [ProducesResponseType(typeof(List<PermissionResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -55,6 +57,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.PermissionsUpdate)]
         [HttpPut("{permissionId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -68,6 +71,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.PermissionsUpdate)]
         [HttpPost("{permissionId:guid}/activate")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -79,6 +83,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.PermissionsUpdate)]
         [HttpPost("{permissionId:guid}/deactivate")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -90,6 +95,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.PermissionsDelete)]
         [HttpDelete("{permissionId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

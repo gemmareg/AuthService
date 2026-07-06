@@ -21,20 +21,29 @@ namespace AuthService.Application.Services
 {
     public class TokenService : ITokenGenerator, ITokenRefresher
     {
+        private const string AdminRoleName = "Admin";
+
         private readonly JwtSettings _settings;
         private readonly ITokenRepository _tokenRepository;
+        private readonly IPermissionRepository _permissionRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<TokenService> _logger;
 
-        public TokenService(ITokenRepository tokenRepository, IOptions<JwtSettings> settings, IUnitOfWork unitOfWork, ILogger<TokenService> logger)
+        public TokenService(
+            ITokenRepository tokenRepository,
+            IPermissionRepository permissionRepository,
+            IOptions<JwtSettings> settings,
+            IUnitOfWork unitOfWork,
+            ILogger<TokenService> logger)
         {
             _settings = settings.Value;
             _tokenRepository = tokenRepository;
+            _permissionRepository = permissionRepository;
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
-        public string GenerateAccessToken(User user)
+        public async Task<string> GenerateAccessTokenAsync(User user)
         {
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_settings.SecretKey));
@@ -51,7 +60,9 @@ namespace AuthService.Application.Services
             };
 
             claims.AddRange(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Name)));
-            claims.AddRange(user.GetEffectivePermissions().Select(p => new Claim(AuthClaimTypes.Permission, p)));
+
+            var permissionNames = await GetPermissionNamesForTokenAsync(user);
+            claims.AddRange(permissionNames.Select(p => new Claim(AuthClaimTypes.Permission, p)));
 
             var expiration = DateTime.UtcNow.Add(TokenPolicies.GetExpiration(TokenType.Access));
 
@@ -66,6 +77,29 @@ namespace AuthService.Application.Services
             _logger.LogInformation("Generated access token for user {UserId} with email {Email}", user.Id, user.Email);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        /// <summary>
+        /// Para un usuario Admin, los claims de permiso incluyen TODOS los
+        /// permisos activos del sistema, calculados en el momento de emitir
+        /// el token — no hace falta mantener sincronizada ninguna asignación
+        /// Admin-Permission en BD, y consumidores externos que validen el
+        /// token mirando solo estos claims (sin conocer la convención de rol
+        /// "Admin") ven exactamente lo que deben ver.
+        /// </summary>
+        private async Task<IEnumerable<string>> GetPermissionNamesForTokenAsync(User user)
+        {
+            var isAdmin = user.Roles.Any(r => r.Name.Equals(AdminRoleName, StringComparison.OrdinalIgnoreCase));
+            if (!isAdmin)
+            {
+                return user.GetEffectivePermissions();
+            }
+
+            var allPermissions = await _permissionRepository.GetAllAsync();
+            return allPermissions
+                .Where(p => p.IsActive)
+                .Select(p => p.Name)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
         }
 
         public async Task<Result<RefreshToken>> GenerateRefreshToken(Guid userId)
@@ -105,7 +139,7 @@ namespace AuthService.Application.Services
                 return Result<AuthResponse>.Fail("User account is inactive");
             }
 
-            var newAccessToken = GenerateAccessToken(user);
+            var newAccessToken = await GenerateAccessTokenAsync(user);
 
             var newRefreshToken = await GenerateRefreshToken(user.Id);
             token.Revoke();

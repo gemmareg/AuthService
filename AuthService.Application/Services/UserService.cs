@@ -57,7 +57,7 @@ namespace AuthService.Application.Services
             await userRepository.AddAsync(user);
             await unitOfWork.SaveChangesAsync();
 
-            var accessToken = tokenService.GenerateAccessToken(user);
+            var accessToken = await tokenService.GenerateAccessTokenAsync(user);
 
             var refreshTokenResult = await tokenService.GenerateRefreshToken(user.Id);
             if (!refreshTokenResult.Success)
@@ -157,7 +157,7 @@ namespace AuthService.Application.Services
                 PublishActivatedEvent(user);
             }
 
-            var accessToken = tokenService.GenerateAccessToken(user);
+            var accessToken = await tokenService.GenerateAccessTokenAsync(user);
 
             var refreshTokenResult = await tokenService.GenerateRefreshToken(user.Id);
             if (!refreshTokenResult.Success)

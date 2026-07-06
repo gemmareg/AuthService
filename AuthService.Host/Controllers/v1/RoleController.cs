@@ -16,11 +16,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace AuthService.Host.Controllers.v1
 {
     [Authorize]
-    [RequiresPermission(AuthPermissions.RolesManage)]
     [ApiController]
     [Route("api/[controller]")]
     public class RoleController(IMediator mediator, ILogger<RoleController> logger) : ControllerBase
     {
+        [RequiresPermission(AuthPermissions.RolesCreate)]
         [HttpPost]
         [ProducesResponseType(typeof(RoleResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -34,6 +34,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.RolesRead)]
         [HttpGet("{roleId:guid}")]
         [ProducesResponseType(typeof(RoleResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -45,6 +46,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.RolesRead)]
         [HttpGet]
         [ProducesResponseType(typeof(List<RoleResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -55,6 +57,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.RolesUpdate)]
         [HttpPut("{roleId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -68,6 +71,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.RolesDelete)]
         [HttpDelete("{roleId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -81,6 +85,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.RolesUpdate)]
         [HttpPost("{roleId:guid}/permissions/{permissionId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -92,6 +97,7 @@ namespace AuthService.Host.Controllers.v1
             return result.ToActionResult();
         }
 
+        [RequiresPermission(AuthPermissions.RolesUpdate)]
         [HttpDelete("{roleId:guid}/permissions/{permissionId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
