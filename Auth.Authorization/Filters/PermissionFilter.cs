@@ -1,9 +1,9 @@
-﻿using Auth.Contracts.Attributes;
+﻿using Auth.Authorization.Attributes;
 using Auth.Contracts.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Auth.Contracts.Filters
+namespace Auth.Authorization.Filters
 {
     public class PermissionFilter : IAuthorizationFilter
     {
