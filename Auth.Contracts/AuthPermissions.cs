@@ -17,5 +17,11 @@
 
         /// <summary>Permite editar los datos de otro usuario.</summary>
         public const string UsersUpdateAny = "users:update:any";
+
+        /// <summary>Permite crear, renombrar, eliminar roles y gestionar sus permisos.</summary>
+        public const string RolesManage = "roles:manage";
+
+        /// <summary>Permite crear, editar, (des)activar y eliminar permisos.</summary>
+        public const string PermissionsManage = "permissions:manage";
     }
 }

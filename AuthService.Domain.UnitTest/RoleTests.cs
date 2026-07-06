@@ -46,5 +46,53 @@ namespace AuthService.Domain.UnitTest
             Assert.False(result.Success);
             Assert.Equal(ErrorMessages.PERMISSION_ALREADY_ASSIGNED, result.Message);
         }
+
+        [Fact]
+        public void Rename_Should_Update_Name_When_Valid()
+        {
+            var role = Role.Create("admin").Data!;
+
+            var result = role.Rename("superadmin");
+
+            Assert.True(result.Success);
+            Assert.Equal("superadmin", role.Name);
+        }
+
+        [Fact]
+        public void Rename_Should_Fail_When_Name_Is_Empty()
+        {
+            var role = Role.Create("admin").Data!;
+
+            var result = role.Rename("");
+
+            Assert.False(result.Success);
+            Assert.Equal(ErrorMessages.ROLE_NAME_NOT_NULL, result.Message);
+            Assert.Equal("admin", role.Name);
+        }
+
+        [Fact]
+        public void RemovePermission_Should_Remove_Permission_When_Assigned()
+        {
+            var role = Role.Create("admin").Data!;
+            var permission = Permission.Create("permission", "read:users").Data!;
+            role.AddPermission(permission);
+
+            var result = role.RemovePermission(permission);
+
+            Assert.True(result.Success);
+            Assert.DoesNotContain(permission, role.Permissions);
+        }
+
+        [Fact]
+        public void RemovePermission_Should_Fail_When_Not_Assigned()
+        {
+            var role = Role.Create("admin").Data!;
+            var permission = Permission.Create("permission", "read:users").Data!;
+
+            var result = role.RemovePermission(permission);
+
+            Assert.False(result.Success);
+            Assert.Equal(ErrorMessages.PERMISSION_NOT_ASSIGNED, result.Message);
+        }
     }
 }

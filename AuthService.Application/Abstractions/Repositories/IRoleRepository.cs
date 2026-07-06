@@ -6,5 +6,7 @@ namespace AuthService.Application.Abstractions.Repositories
     public interface IRoleRepository : IRepository<Role>
     {
         Task<Role?> GetByNameAsync(string name);
+
+        Task<Role?> GetByIdWithPermissionsAsync(Guid id);
     }
 }

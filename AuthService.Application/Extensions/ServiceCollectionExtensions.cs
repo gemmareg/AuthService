@@ -1,6 +1,7 @@
-﻿using AuthService.Application.Abstractions.Services;
+using AuthService.Application.Abstractions.Services;
 using AuthService.Application.Extensions.Options;
 using AuthService.Application.Services;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -19,6 +20,8 @@ namespace AuthService.Application.Extensions
             services.AddScoped<ITokenRefresher, TokenService>();
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IPermissionService, PermissionService>();
 
             return services;
         }
