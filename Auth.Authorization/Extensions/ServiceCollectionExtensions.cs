@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Auth.Authorization.Extensions
 {
+    /// <summary>Extensiones de <see cref="IServiceCollection"/> para registrar este paquete.</summary>
     public static class ServiceCollectionExtensions
     {
         /// <summary>

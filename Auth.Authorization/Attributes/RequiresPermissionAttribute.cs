@@ -12,8 +12,10 @@ namespace Auth.Authorization.Attributes
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
     public class RequiresPermissionAttribute : Attribute, IFilterMetadata
     {
+        /// <summary>Nombre del permiso requerido (p. ej. <c>"roles:read"</c>). Ver <see cref="Auth.Contracts.AuthPermissions"/>.</summary>
         public string Permission { get; }
 
+        /// <param name="permission">Nombre del permiso requerido para acceder a la acción/controller decorado.</param>
         public RequiresPermissionAttribute(string permission)
         {
             Permission = permission;

@@ -10,6 +10,11 @@ namespace Auth.Contracts.Extensions
     /// </summary>
     public static class UserExtensions
     {
+        /// <summary>
+        /// Id del usuario (claim "nameidentifier"/"sub"/"id", en ese orden de
+        /// preferencia). Devuelve <see cref="string.Empty"/> si el principal es
+        /// nulo o no lleva ninguno de esos claims.
+        /// </summary>
         public static string GetId(this ClaimsPrincipal user)
         {
             return user?.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -17,24 +22,42 @@ namespace Auth.Contracts.Extensions
                 ?? user?.FindFirst("id")?.Value ?? string.Empty;
         }
 
+        /// <summary>
+        /// Email del usuario (claim "emailaddress"/"email"). Devuelve
+        /// <see cref="string.Empty"/> si el principal es nulo o no lleva el claim.
+        /// </summary>
         public static string GetEmail(this ClaimsPrincipal user)
         {
             return user?.FindFirst(ClaimTypes.Email)?.Value
                 ?? user?.FindFirst("email")?.Value ?? string.Empty;
         }
 
+        /// <summary>
+        /// Username del usuario (claim "name"/"username"). Devuelve
+        /// <see cref="string.Empty"/> si el principal es nulo o no lleva el claim.
+        /// </summary>
         public static string GetUsername(this ClaimsPrincipal user)
         {
             return user?.FindFirst(ClaimTypes.Name)?.Value
                 ?? user?.FindFirst("username")?.Value ?? string.Empty;
         }
 
+        /// <summary>
+        /// Lista de nombres de rol del usuario (claim "role", uno por cada rol
+        /// asignado). Devuelve una lista vacía si el principal es nulo o no
+        /// tiene ningún rol.
+        /// </summary>
         public static List<string> GetRoles(this ClaimsPrincipal user)
         {
             return user?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList()
                 ?? user?.FindAll("role").Select(c => c.Value).ToList() ?? new List<string>();
         }
 
+        /// <summary>
+        /// True si el usuario tiene el rol "Admin". Atajo equivalente a
+        /// <c>user.GetRoles().Contains("Admin")</c>, pero usando
+        /// <see cref="ClaimsPrincipal.IsInRole(string)"/> directamente.
+        /// </summary>
         public static bool IsAdmin(this ClaimsPrincipal user)
         {
             return user?.IsInRole("Admin") ?? false;
