@@ -252,7 +252,7 @@ namespace AuthService.Application.UnitTest.Services
             // Assert
             Assert.True(result.Success);
             Assert.False(target.IsActive);
-            _eventPublisher.Verify(e => e.PublishUserSoftDeleted(It.IsAny<Auth.Contracts.Events.UserSoftDeletedEvent>()), Times.Once);
+            _eventPublisher.Verify(e => e.PublishUserSoftDeletedAsync(It.IsAny<Auth.Contracts.Events.UserSoftDeletedEvent>()), Times.Once);
         }
 
         [Fact]
@@ -272,7 +272,7 @@ namespace AuthService.Application.UnitTest.Services
             Assert.False(user.IsActive);
             _userRepositoryMock.Verify(r => r.UpdateAsync(It.Is<User>(u => u.Id == user.Id && !u.IsActive)), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-            _eventPublisher.Verify(e => e.PublishUserSoftDeleted(It.IsAny<Auth.Contracts.Events.UserSoftDeletedEvent>()), Times.Once);
+            _eventPublisher.Verify(e => e.PublishUserSoftDeletedAsync(It.IsAny<Auth.Contracts.Events.UserSoftDeletedEvent>()), Times.Once);
         }
 
     }

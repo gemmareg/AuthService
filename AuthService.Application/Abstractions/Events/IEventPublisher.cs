@@ -4,10 +4,10 @@ namespace AuthService.Application.Abstractions.Events
 {
     public interface IEventPublisher
     {
-        void PublishUserRegistered(UserRegisteredEvent evt);
-        void PublishUserSoftDeleted(UserSoftDeletedEvent evt);
-        void PublishUserActivated(UserActivatedEvent evt);
-        void PublishEmailChanged(EmailChangedEvent evt);
-        void PublishAdminCreated(AdminCreatedEvent evt);
+        Task PublishUserRegisteredAsync(UserRegisteredEvent evt);
+        Task PublishUserSoftDeletedAsync(UserSoftDeletedEvent evt);
+        Task PublishUserActivatedAsync(UserActivatedEvent evt);
+        Task PublishEmailChangedAsync(EmailChangedEvent evt);
+        Task PublishAdminCreatedAsync(AdminCreatedEvent evt);
     }
 }

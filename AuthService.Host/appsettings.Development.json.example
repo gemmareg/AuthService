@@ -15,11 +15,8 @@
     "AccessTokenExpirationMinutes": 15,
     "RefreshTokenExpirationDays": 7
   },
-  "RabbitMQ": {
-    "Host": "localhost",
-    "Port": 5672,
-    "User": "guest",
-    "Password": "CHANGE_ME"
+  "MessageBroker": {
+    "BaseUrl": "http://localhost:5121/"
   },
   "AdminSeed": {
     "UserId": "11111111-1111-1111-1111-111111111111",
@@ -28,5 +25,13 @@
     "Password": "CHANGE_ME",
     "Name": "System",
     "Surname": "Admin"
+  },
+  "EventPublisherSeed": {
+    "UserId": "22222222-2222-2222-2222-222222222222",
+    "Username": "eventpublisher",
+    "Email": "eventpublisher@authservice.local",
+    "Password": "CHANGE_ME",
+    "Name": "Service",
+    "Surname": "EventPublisher"
   }
 }

@@ -69,7 +69,7 @@ namespace AuthService.Application.Services
 
             logger.LogInformation("User registered successfully with email: {Email}", email);
 
-            PublishRegisteredEvent(user);
+            await PublishRegisteredEventAsync(user);
 
             return Result<AuthResponse>.Ok(
                 new AuthResponse()
@@ -128,7 +128,7 @@ namespace AuthService.Application.Services
 
             logger.LogInformation("User soft deleted successfully with ID: {UserId}", userId);
 
-            PublishSoftDeletedEvent(user);
+            await PublishSoftDeletedEventAsync(user);
 
             return Result.Ok();
         }
@@ -154,7 +154,7 @@ namespace AuthService.Application.Services
                 user.Activate();
                 await unitOfWork.SaveChangesAsync();
 
-                PublishActivatedEvent(user);
+                await PublishActivatedEventAsync(user);
             }
 
             var accessToken = await tokenService.GenerateAccessTokenAsync(user);
@@ -197,7 +197,7 @@ namespace AuthService.Application.Services
                     return Result.Fail("Email already in use by another account");
                 }
                 user.UpdateEmail(email);
-                PublishEmailUpdatedEvent(user);
+                await PublishEmailUpdatedEventAsync(user);
             }
 
             user.UpdateName(name, surname);
@@ -231,30 +231,30 @@ namespace AuthService.Application.Services
             return username + (nextNumber + 1);
         }
 
-        private void PublishRegisteredEvent(User user)
+        private Task PublishRegisteredEventAsync(User user)
         {
             var evt = new UserRegisteredEvent(user.Id.ToString(), user.Name);
 
-            publisher.PublishUserRegistered(evt);
+            return publisher.PublishUserRegisteredAsync(evt);
         }
 
-        private void PublishSoftDeletedEvent(User user)
+        private Task PublishSoftDeletedEventAsync(User user)
         {
             UserSoftDeletedEvent evt = new(user.Id.ToString());
 
-            publisher.PublishUserSoftDeleted(evt);
+            return publisher.PublishUserSoftDeletedAsync(evt);
         }
 
-        private void PublishActivatedEvent(User user)
+        private Task PublishActivatedEventAsync(User user)
         {
             UserActivatedEvent evt = new(user.Id.ToString());
-            publisher.PublishUserActivated(evt);
+            return publisher.PublishUserActivatedAsync(evt);
         }
 
-        private void PublishEmailUpdatedEvent(User user)
+        private Task PublishEmailUpdatedEventAsync(User user)
         {
             EmailChangedEvent evt = new(user.Id.ToString(), user.Email);
-            publisher.PublishEmailChanged(evt);
+            return publisher.PublishEmailChangedAsync(evt);
         }
     }
 }

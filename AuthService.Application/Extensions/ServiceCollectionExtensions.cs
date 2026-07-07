@@ -25,11 +25,13 @@ namespace AuthService.Application.Extensions
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
             services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+            services.Configure<EventPublisherOptions>(configuration.GetSection("EventPublisherSeed"));
 
             services.AddScoped<ITokenGenerator, TokenService>();
             services.AddScoped<ITokenRefresher, TokenService>();
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddSingleton<ICommonPasswordChecker, CommonPasswordChecker>();
+            services.AddSingleton<IServiceTokenProvider, EventPublisherTokenProvider>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IPermissionService, PermissionService>();

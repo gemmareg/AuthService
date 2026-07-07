@@ -45,5 +45,32 @@
 
         /// <summary>Permite eliminar permisos.</summary>
         public const string PermissionsDelete = "permissions:delete";
+
+        // Los siguientes permisos son de recursos propiedad de MessageBrokerService, no de
+        // AuthService. Se centralizan aquí (en vez de en el propio MessageBrokerService) porque
+        // AuthService es quien emite y gestiona todos los permisos del ecosistema — conceder
+        // estos permisos a un rol/usuario es responsabilidad suya, así que también lo es evitar
+        // que su nombre viva como dos magic strings independientes que puedan divergir.
+
+        /// <summary>Permite publicar eventos en MessageBrokerService.</summary>
+        public const string EventsPublish = "events:publish";
+
+        /// <summary>Permite consultar eventos publicados en MessageBrokerService (detalle o sus entregas).</summary>
+        public const string EventsRead = "events:read";
+
+        /// <summary>Permite crear suscripciones en MessageBrokerService.</summary>
+        public const string SubscriptionsCreate = "subscriptions:create";
+
+        /// <summary>Permite consultar suscripciones en MessageBrokerService.</summary>
+        public const string SubscriptionsRead = "subscriptions:read";
+
+        /// <summary>Permite activar/desactivar una suscripción en MessageBrokerService.</summary>
+        public const string SubscriptionsUpdate = "subscriptions:update";
+
+        /// <summary>Permite consultar entregas fallidas (dead-lettered) en MessageBrokerService.</summary>
+        public const string DeliveriesRead = "deliveries:read";
+
+        /// <summary>Permite reencolar una entrega fallida en MessageBrokerService.</summary>
+        public const string DeliveriesRequeue = "deliveries:requeue";
     }
 }

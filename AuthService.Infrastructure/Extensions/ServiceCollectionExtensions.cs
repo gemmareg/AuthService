@@ -16,6 +16,7 @@ namespace AuthService.Infrastructure.Extensions
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<AdminSeedSettings>(configuration.GetSection("AdminSeed"));
+            services.Configure<EventPublisherSeedSettings>(configuration.GetSection("EventPublisherSeed"));
 
             services.AddDbContext<AuthDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("SqlServer"))

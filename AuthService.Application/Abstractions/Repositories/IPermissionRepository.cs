@@ -5,5 +5,6 @@ namespace AuthService.Application.Abstractions.Repositories
 {
     public interface IPermissionRepository : IRepository<Permission>
     {
+        Task<Permission?> GetByNameAsync(string name);
     }
 }

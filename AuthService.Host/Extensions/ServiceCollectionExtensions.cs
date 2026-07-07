@@ -3,10 +3,10 @@ using AuthService.Application.Abstractions.Events;
 using AuthService.Application.Extensions.Options;
 using AuthService.Host.Events;
 using Auth.Contracts.Extensions;
+using MessageBroker.Client.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using RabbitMQ.Client;
 using System.Text;
 
 namespace AuthService.Host.Extensions
@@ -18,8 +18,7 @@ namespace AuthService.Host.Extensions
             services.AddJwtAuthentication(configuration);
             services.AddAuthAuthorization();
             services.AddSwaggerDocumentation();
-            services.AddRabbitMQ(configuration);
-            services.AddSingleton<IEventPublisher, EventPublisher>();
+            services.AddMessageBrokerEventPublishing(configuration);
 
             return services;
         }
@@ -87,22 +86,17 @@ namespace AuthService.Host.Extensions
             return services;
         }
 
-        private static IServiceCollection AddRabbitMQ(this IServiceCollection services, IConfiguration configuration)
+        private static IServiceCollection AddMessageBrokerEventPublishing(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton<IConnectionFactory>(_ =>
-            new ConnectionFactory
+            services.AddTransient<MessageBrokerAuthHandler>();
+
+            services.AddMessageBrokerClient(options =>
             {
-                HostName = configuration["RabbitMQ:Host"],
-                Port = int.Parse(configuration["RabbitMQ:Port"] ?? "0"),
-                UserName = configuration["RabbitMQ:User"],
-                Password = configuration["RabbitMQ:Password"]
-            });
+                options.BaseUrl = configuration["MessageBroker:BaseUrl"]!;
+            })
+            .AddHttpMessageHandler<MessageBrokerAuthHandler>();
 
-            services.AddSingleton<IConnection>(sp =>
-                sp.GetRequiredService<IConnectionFactory>().CreateConnection());
-
-            services.AddSingleton<IModel>(sp =>
-                sp.GetRequiredService<IConnection>().CreateModel());
+            services.AddScoped<IEventPublisher, HttpEventPublisher>();
 
             return services;
         }
