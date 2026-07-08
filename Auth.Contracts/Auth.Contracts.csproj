@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>Auth.Contracts</PackageId>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <Authors>AuthService</Authors>
     <Description>Event contracts and JWT claims helpers for services that consume AuthService tokens/events.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

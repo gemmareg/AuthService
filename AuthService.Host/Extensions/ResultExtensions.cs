@@ -10,7 +10,7 @@ namespace AuthService.Host.Extensions
         public static ActionResult ToActionResult<T>(this Result<T> result)
         {
             if (result.Success) return new OkObjectResult(result.Data);
-            if (result.Message == UserErrorMessages.AccountDeactivatedByAdmin || result.Message == UserErrorMessages.SoftDeleteForbidden)
+            if (result.Message == UserErrorMessages.AccountDeactivatedByAdmin)
                 return new ForbidResult();
 
             return new BadRequestObjectResult(result.Message) { };
@@ -19,8 +19,6 @@ namespace AuthService.Host.Extensions
         public static ActionResult ToActionResult(this Result result)
         {
             if (result.Success) return new OkObjectResult(result);
-            if (result.Message == UserErrorMessages.SoftDeleteForbidden)
-                return new ForbidResult();
 
             return new BadRequestObjectResult(result.Message) { };
         }

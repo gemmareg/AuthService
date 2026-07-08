@@ -38,9 +38,22 @@
         }
 
         [Fact]
-        public void HasPermission_UserIsAdmin_ReturnsTrue()
+        public void HasPermission_UserIsAdmin_ButLacksTheClaim_ReturnsFalse()
         {
+            // No hay bypass por rol: un Admin solo tiene acceso si su token
+            // lleva el permiso como claim (TokenService se lo garantiza
+            // concediéndole todos los permisos activos al emitirlo).
             var user = CreateUser(role: "Admin");
+
+            var result = user.HasPermission("anything.whatever");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void HasPermission_UserIsAdmin_AndHasTheClaim_ReturnsTrue()
+        {
+            var user = CreateUser(role: "Admin", permissions: new[] { "anything.whatever" });
 
             var result = user.HasPermission("anything.whatever");
 

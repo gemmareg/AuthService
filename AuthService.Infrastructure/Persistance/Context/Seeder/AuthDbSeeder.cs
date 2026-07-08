@@ -59,6 +59,15 @@ namespace AuthService.Infrastructure.Persistance.Context.Seeder
             var adminRole = await EnsureRoleAsync("Admin");
             await EnsureRoleAsync("User");
 
+            // Un Admin no tiene los permisos asignados a su rol en BD: su token
+            // lleva TODOS los permisos activos como claims (ver TokenService), así
+            // que basta con que cada permiso conocido exista como fila activa —
+            // no hace falta asignárselo al rol Admin explícitamente. Se guarda ya
+            // para que SeedEventPublisherAsync pueda releer "events:publish" a
+            // continuación.
+            await EnsureKnownPermissionsAsync();
+            await _unitOfWork.SaveChangesAsync();
+
             // Debe sembrarse antes que el Admin: en cuanto exista el Admin, se
             // publica AdminCreated por HTTP, lo que exige que la cuenta de
             // servicio EventPublisher ya pueda autenticarse.
@@ -111,6 +120,42 @@ namespace AuthService.Infrastructure.Persistance.Context.Seeder
             var newRole = Role.Create(roleName).Data!;
             await _roleRepository.AddAsync(newRole);
             return newRole;
+        }
+
+        /// <summary>
+        /// Da de alta como fila activa todo el vocabulario de permisos conocido del ecosistema
+        /// (el de AuthService y el de los servicios cuyos permisos centraliza aquí, como
+        /// MessageBrokerService), para que el token de un Admin — que lleva TODOS los permisos
+        /// activos, no solo los asignados a su rol — los incluya de verdad.
+        /// </summary>
+        private async Task EnsureKnownPermissionsAsync()
+        {
+            await EnsurePermissionAsync(AuthPermissions.UsersDeleteAny, "Deactivate (soft-delete) another user's account.");
+            await EnsurePermissionAsync(AuthPermissions.UsersUpdateAny, "Edit another user's data.");
+            await EnsurePermissionAsync(AuthPermissions.RolesRead, "View roles.");
+            await EnsurePermissionAsync(AuthPermissions.RolesCreate, "Create roles.");
+            await EnsurePermissionAsync(AuthPermissions.RolesUpdate, "Rename a role and manage its permissions.");
+            await EnsurePermissionAsync(AuthPermissions.RolesDelete, "Delete roles.");
+            await EnsurePermissionAsync(AuthPermissions.PermissionsRead, "View permissions.");
+            await EnsurePermissionAsync(AuthPermissions.PermissionsCreate, "Create permissions.");
+            await EnsurePermissionAsync(AuthPermissions.PermissionsUpdate, "Edit a permission's description and active state.");
+            await EnsurePermissionAsync(AuthPermissions.PermissionsDelete, "Delete permissions.");
+            await EnsurePermissionAsync(AuthPermissions.EventsPublish, "Publish events to MessageBrokerService.");
+            await EnsurePermissionAsync(AuthPermissions.EventsRead, "View published events in MessageBrokerService (detail or deliveries).");
+            await EnsurePermissionAsync(AuthPermissions.SubscriptionsCreate, "Create subscriptions in MessageBrokerService.");
+            await EnsurePermissionAsync(AuthPermissions.SubscriptionsRead, "View subscriptions in MessageBrokerService.");
+            await EnsurePermissionAsync(AuthPermissions.SubscriptionsUpdate, "Activate/deactivate a subscription in MessageBrokerService.");
+            await EnsurePermissionAsync(AuthPermissions.DeliveriesRead, "View dead-lettered deliveries in MessageBrokerService.");
+            await EnsurePermissionAsync(AuthPermissions.DeliveriesRequeue, "Requeue a dead-lettered delivery in MessageBrokerService.");
+        }
+
+        private async Task EnsurePermissionAsync(string name, string description)
+        {
+            var existing = await _permissionRepository.GetByNameAsync(name);
+            if (existing is not null) return;
+
+            var permission = Permission.Create(name, description).Data!;
+            await _permissionRepository.AddAsync(permission);
         }
 
         private async Task SeedEventPublisherAsync()

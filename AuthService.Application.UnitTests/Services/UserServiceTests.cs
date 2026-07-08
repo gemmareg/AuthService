@@ -211,40 +211,15 @@ namespace AuthService.Application.UnitTest.Services
 
 
         [Fact]
-        public async Task SoftDeleteAsync_ReturnsFail_WhenRequesterIsNotOwnerOrAdmin()
+        public async Task SoftDeleteAsync_ReturnsOk_WhenRequesterIsDifferentUser()
         {
-            // Arrange
-            var target = User.Create("target", "target@email.com", PASSWORD_HASHED, NAME, SURNAME).Data!;
-            var requester = User.Create("other", "other@email.com", PASSWORD_HASHED, NAME, SURNAME).Data!;
-            requester.AssignRole(Role.Create("User").Data!);
-
-            _userRepositoryMock.Setup(p => p.GetByIdAsync(target.Id)).ReturnsAsync(target);
-            _userRepositoryMock.Setup(p => p.GetByIdWithRolesAsync(requester.Id)).ReturnsAsync(requester);
-
-            // Act
-            var result = await _userService.SoftDeleteAsync(target.Id, requester.Id);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal(UserErrorMessages.SoftDeleteForbidden, result.Message);
-        }
-
-        [Fact]
-        public async Task SoftDeleteAsync_ReturnsOk_WhenRequesterHasDeleteAnyPermission()
-        {
-            // Arrange: el requester NO tiene rol Admin, pero su rol sí tiene
-            // asignado el permiso "users:delete:any" -> debe poder borrar a otros.
+            // La autorización (self, o el permiso "users:delete:any" según el
+            // claim del token) es responsabilidad del controller, no del
+            // servicio — este ya no repite ninguna comprobación contra la BD.
             var target = User.Create("target2", "target2@email.com", PASSWORD_HASHED, NAME, SURNAME).Data!;
-
-            var permission = Permission.Create(Auth.Contracts.AuthPermissions.UsersDeleteAny, "Delete any user").Data!;
-            var role = Role.Create("Support").Data!;
-            role.AddPermission(permission);
-
             var requester = User.Create("support", "support@email.com", PASSWORD_HASHED, NAME, SURNAME).Data!;
-            requester.AssignRole(role);
 
             _userRepositoryMock.Setup(p => p.GetByIdAsync(target.Id)).ReturnsAsync(target);
-            _userRepositoryMock.Setup(p => p.GetByIdWithRolesAsync(requester.Id)).ReturnsAsync(requester);
 
             // Act
             var result = await _userService.SoftDeleteAsync(target.Id, requester.Id);
@@ -262,7 +237,6 @@ namespace AuthService.Application.UnitTest.Services
             var user = User.Create(USERNAME, EMAIL, PASSWORD_HASHED, NAME, SURNAME).Data!;
             user.AssignRole(Role.Create("User").Data!);
             _userRepositoryMock.Setup(p => p.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(user);
-            _userRepositoryMock.Setup(p => p.GetByIdWithRolesAsync(user.Id)).ReturnsAsync(user);
 
             // Act
             var result = await _userService.SoftDeleteAsync(user.Id, user.Id);
