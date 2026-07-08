@@ -22,7 +22,7 @@ bool isAdmin = User.IsAdmin();
 bool canDeleteAny = User.HasPermission(AuthPermissions.UsersDeleteAny);
 ```
 
-`HasPermission` siempre devuelve `true` para usuarios con el rol `Admin`, sin mirar la lista de permisos — AuthService ya se asegura de que el token de un Admin lleve todos los permisos activos del sistema, así que este atajo es solo eso, un atajo.
+`HasPermission` no tiene bypass por rol: comprueba únicamente los claims de permiso del token. Un usuario Admin tiene acceso porque su token lleva el permiso como claim (`TokenService` le concede todos los permisos activos del sistema al emitir el token), nunca porque el rol se llame "Admin" — el nombre del rol no decide el acceso en ningún punto.
 
 ## Nombres de permisos conocidos
 

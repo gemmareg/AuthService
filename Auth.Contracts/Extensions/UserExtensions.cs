@@ -66,16 +66,14 @@ namespace Auth.Contracts.Extensions
         /// <summary>
         /// Comprueba si el usuario tiene el permiso indicado, entre los permisos
         /// efectivos incluidos en el token (directos + heredados de sus roles).
-        /// NOTA: los usuarios con rol "Admin" pasan cualquier check, sin mirar si
-        /// el permiso concreto está en la lista. Es una decisión de diseño explícita
-        /// (patrón "superadmin"); si no la quieres, quita este bypass.
+        /// No hay bypass por rol: un Admin tiene acceso porque su token lleva el
+        /// permiso como claim (TokenService le concede todos los permisos activos
+        /// al emitirlo), no porque el rol se llame "Admin". El rol nunca decide
+        /// el acceso por sí solo.
         /// </summary>
         public static bool HasPermission(this ClaimsPrincipal user, string requiredPermission)
         {
             if (user == null) return false;
-
-            if (user.IsInRole("Admin"))
-                return true;
 
             return user.FindAll(AuthClaimTypes.Permission)
                 .Any(c => c.Value.Equals(requiredPermission, StringComparison.OrdinalIgnoreCase));

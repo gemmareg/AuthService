@@ -45,7 +45,7 @@ public class RoleController : ControllerBase
 
 `[RequiresPermission]` se puede aplicar a nivel de acción (como arriba, recomendado si distintas acciones necesitan distintos permisos) o a nivel de controller (si todas las acciones requieren el mismo permiso). Si el usuario no lo tiene, la petición se corta con `403 Forbidden` antes de llegar al cuerpo de la acción.
 
-Los usuarios con el rol `Admin` pasan cualquier comprobación de permiso automáticamente (ver `Auth.Contracts.Extensions.UserExtensions.HasPermission`).
+No hay bypass por rol: `HasPermission` (`Auth.Contracts.Extensions.UserExtensions`) solo comprueba el claim de permiso del token. Un usuario Admin tiene acceso porque su token lleva todos los permisos activos como claims (se los concede `TokenService` al emitirlo), no porque el rol se llame "Admin".
 
 ## Requisitos
 
