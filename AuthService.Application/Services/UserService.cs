@@ -3,10 +3,8 @@ using AuthService.Application.Abstractions.Repositories;
 using AuthService.Application.Abstractions.Services;
 using AuthService.Application.Abstractions.UnitOfWork;
 using AuthService.Application.Dtos;
-using Auth.Contracts;
 using Auth.Contracts.Events;
 using AuthService.Domain;
-using AuthService.Domain.Extensions;
 using AuthService.Domain.ValueObjects;
 using AuthService.Shared.Result.Generic;
 using AuthService.Shared.Constants;
@@ -93,27 +91,10 @@ namespace AuthService.Application.Services
 
             var isSelf = requesterId == userId;
 
-            // La autorización "rápida" (self u ostenta el permiso, según el token)
-            // ya se comprueba en el controller. Aquí repetimos la comprobación
-            // contra el estado actual en BD como red de seguridad (defensa en
-            // profundidad) y solo si hace falta, es decir, únicamente cuando no
-            // es el propio usuario quien se está desactivando.
-            if (!isSelf)
-            {
-                var requester = await userRepository.GetByIdWithRolesAsync(requesterId);
-                if (requester is null)
-                {
-                    logger.LogWarning("Soft delete denied because requester was not found. RequesterId: {RequesterId}", requesterId);
-                    return Result.Fail("Invalid requester");
-                }
-
-                if (!requester.HasEffectivePermission(AuthPermissions.UsersDeleteAny))
-                {
-                    logger.LogWarning("Soft delete forbidden. Requester {RequesterId} lacks {Permission} to deactivate user {UserId}", requesterId, AuthPermissions.UsersDeleteAny, userId);
-                    return Result.Fail(UserErrorMessages.SoftDeleteForbidden);
-                }
-            }
-
+            // La autorización (self, o el permiso "users:delete:any" según el
+            // claim del token) ya se comprueba en el controller — no se repite
+            // aquí contra la BD; el servicio confía en que quien lo llama ya
+            // validó el acceso.
             var softDeleteResult = user.SoftDelete();
             if (!softDeleteResult.Success)
             {

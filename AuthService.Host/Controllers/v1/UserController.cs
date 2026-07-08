@@ -46,9 +46,9 @@ namespace AuthService.Host.Controllers.v1
             }
 
             // Cualquier usuario puede desactivar su propia cuenta. Desactivar la
-            // cuenta de otro requiere el permiso "users:delete:any" (comprobado
-            // aquí contra el token para responder rápido; UserService repite la
-            // comprobación contra el estado actual en BD como red de seguridad).
+            // cuenta de otro requiere el permiso "users:delete:any", comprobado
+            // aquí contra el claim del token — es la única comprobación; el
+            // servicio confía en que quien lo llama ya la hizo.
             if (requesterId != userId && !User.HasPermission(AuthPermissions.UsersDeleteAny))
             {
                 logger.LogWarning("Soft delete forbidden. Requester {RequesterId} lacks {Permission} to deactivate user {UserId}", requesterId, AuthPermissions.UsersDeleteAny, userId);
